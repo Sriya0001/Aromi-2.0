@@ -1,0 +1,27 @@
+# Environments & Caches
+backend/venv/
+backend/.venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+backend/.cache
+
+# Environment variables
+.env
+*.env
+
+# Dependencies & Build outputs
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+.vite/
+
+# Databases & Logs
+backend/*.db
+*.db
+*.log
+.DS_Store

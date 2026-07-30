@@ -1,0 +1,309 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-color: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-mesh-1: rgba(124, 58, 237, 0.05);
+  --bg-mesh-2: rgba(236, 72, 153, 0.05);
+  --bg-mesh-3: rgba(6, 182, 212, 0.05);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --border: rgba(124, 58, 237, 0.1);
+  --purple: #7c3aed;
+  --pink: #ec4899;
+  --cyan: #06b6d4;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+}
+
+.dark {
+  --bg-color: #0a0a1a;
+  --bg-card: #12122a;
+  --bg-mesh-1: rgba(124, 58, 237, 0.15);
+  --bg-mesh-2: rgba(236, 72, 153, 0.1);
+  --bg-mesh-3: rgba(6, 182, 212, 0.08);
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: rgba(124, 58, 237, 0.2);
+  --glass-bg: rgba(18, 18, 42, 0.8);
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #7c3aed;
+  border-radius: 3px;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-main {
+  color: var(--text-main);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.gradient-text-cyan {
+  background: linear-gradient(135deg, #06b6d4, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  color: var(--text-main);
+}
+
+.glass-card:hover {
+  border-color: rgba(124, 58, 237, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.15);
+}
+
+/* Gradient buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.4);
+  opacity: 0.95;
+}
+
+.btn-secondary {
+  background: rgba(124, 58, 237, 0.1);
+  color: #a78bfa;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.5);
+}
+
+/* Glow effect */
+.glow-purple {
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.3);
+}
+
+.glow-pink {
+  box-shadow: 0 0 40px rgba(236, 72, 153, 0.3);
+}
+
+/* Background mesh gradient */
+.bg-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, var(--bg-mesh-1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, var(--bg-mesh-2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, var(--bg-mesh-3) 0%, transparent 50%),
+    var(--bg-color);
+}
+
+/* Input styles */
+.input-dark {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-main);
+  padding: 12px 16px;
+  outline: none;
+  width: 100%;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+}
+
+.input-dark:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.input-dark::placeholder {
+  color: #64748b;
+}
+
+/* Chat bubble styles */
+.chat-user {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  border-radius: 16px 16px 4px 16px;
+  padding: 12px 16px;
+  max-width: 80%;
+  margin-left: auto;
+}
+
+.chat-aromi {
+  background: rgba(26, 26, 54, 0.9);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 16px 16px 16px 4px;
+  padding: 12px 16px;
+  max-width: 80%;
+}
+
+/* Workout timer ring */
+.timer-ring {
+  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.6));
+}
+
+/* Feature icon backgrounds */
+.icon-purple {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+}
+
+.icon-blue {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+.icon-green {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.icon-red {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+.icon-cyan {
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+}
+
+.icon-orange {
+  background: linear-gradient(135deg, #ea580c, #f97316);
+}
+
+/* Navbar active */
+.nav-active {
+  background: rgba(124, 58, 237, 0.2);
+  color: #a78bfa;
+  border-radius: 8px;
+}
+
+/* Progress bar */
+.progress-bar {
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  border-radius: 999px;
+  height: 8px;
+  transition: width 0.8s ease;
+}
+
+/* Floating animation */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Pulse glow */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(124, 58, 237, 0);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Typing dots */
+@keyframes bounce {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-6px);
+  }
+}
+
+.typing-dot {
+  animation: bounce 1.2s infinite;
+  background: #7c3aed;
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}

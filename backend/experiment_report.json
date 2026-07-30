@@ -1,0 +1,31 @@
+{
+  "evaluation_title": "AroMi 2.1 Production Service Benchmark Report",
+  "timestamp": "2026-07-30T12:55:37Z",
+  "population": {
+    "total_users": 600,
+    "standard_users": 500,
+    "edge_cases": 100
+  },
+  "metrics": {
+    "safety_violation_rate_treatment": 0.0,
+    "safety_violation_rate_baseline": 1.0833,
+    "personalization_distance_spd": 0.0,
+    "planner_adaptation_accuracy": 0.956,
+    "explainability_score": 0.594,
+    "latency_stats_ms": {
+      "mean": 1.682,
+      "median": 1.0,
+      "std": 22.206,
+      "p95": 1.51,
+      "p99": 2.023,
+      "ci_95_low": -0.095,
+      "ci_95_high": 3.459
+    }
+  },
+  "targets": {
+    "safety_violation_rate": "strictly 0.0%",
+    "personalization_distance_spd": ">0.65",
+    "planner_adaptation_accuracy": ">0.90",
+    "latency_p95_ms": "<250ms"
+  }
+}
