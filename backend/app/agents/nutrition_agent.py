@@ -110,7 +110,17 @@ Return ONLY valid JSON. No markdown, no extra text."""
         if has_soy:
             replacements.extend([("Soya Chunks", "Paneer / Dal"), ("Tofu", "Cottage Cheese (Paneer)"), ("Soy Milk", "Almond Milk"), ("Soy Sauce", "Coconut Aminos")])
         if has_nut:
-            replacements.extend([("Peanut Butter", "Sunflower Seed Butter"), ("Almonds", "Pumpkin Seeds"), ("Cashews", "Roasted Chana"), ("Walnuts", "Flaxseeds")])
+            replacements.extend([
+                ("Handful of Mixed Nuts & Dates", "Handful of Roasted Seeds (Pumpkin/Sunflower) & Dates"),
+                ("Mixed Nuts & Dates", "Roasted Seeds & Dates"),
+                ("Mixed Nuts", "Roasted Seeds"),
+                ("Peanut Butter", "Sunflower Seed Butter"),
+                ("Almonds", "Pumpkin Seeds"),
+                ("Cashews", "Roasted Chana"),
+                ("Walnuts", "Flaxseeds"),
+                ("Nuts", "Seeds"),
+                ("Nut", "Seed")
+            ])
         if has_dairy:
             replacements.extend([("Paneer", "Tofu"), ("Curd", "Coconut Yoghurt"), ("Milk", "Almond Milk"), ("Ghee", "Olive Oil")])
         if has_gluten:

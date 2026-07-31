@@ -149,6 +149,18 @@ def get_all_nutrition(db: Session, user_id: int) -> list:
             "fat": 50,
             "grocery_list": grocery
         })
+
+    # Always sanitize returned plan for user's allergens & medical conditions
+    try:
+        from app.agents.nutrition_agent import NutritionAgent
+        from app.agents.base import AgentContext
+        nut_agent = NutritionAgent("dummy")
+        hp = profile.to_agent_context() if profile else {}
+        ctx = AgentContext(user_id=user_id, health_profile=hp, db=db)
+        result = nut_agent._apply_nutrition_safety_filter(result, hp, ctx)
+    except Exception as e:
+        print(f"Notice: nutrition safety filter pass: {e}")
+
     return result
 
 

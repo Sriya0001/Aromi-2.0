@@ -249,14 +249,34 @@ Return ONLY this JSON structure:
                     warnings.append(f"Removed '{ex_name}': {reason}")
                     continue
 
-                # Pregnancy Replacements
+                # Pregnancy Replacements (Strict Safety)
                 if is_pregnant:
-                    if any(f in ex_name_lower for f in ["lunge", "squat", "push"]):
-                        exercise["name"] = "Chair Wall Push-ups / Pelvic Tilts"
-                        exercise["instructions"] = "Gentle prenatal movement. Keep breathing steady."
-                        exercise["reps"] = "8-10"
-                        exercise["sets"] = 2
-                        exercise["rest_seconds"] = 90
+                    if "swing" in ex_name_lower or "kettlebell" in ex_name_lower:
+                        exercise["name"] = "Gentle Seated Arm Swings"
+                        exercise["instructions"] = "Sit comfortably on chair and swing arms gently forward and back."
+                        exercise["youtube_query"] = "seated arm swings prenatal tutorial"
+                        warnings.append(f"Replaced explosive '{ex_name}' with 'Gentle Seated Arm Swings' for pregnancy safety.")
+                    elif "climber" in ex_name_lower or "mountain" in ex_name_lower or "burpee" in ex_name_lower or "jump" in ex_name_lower:
+                        exercise["name"] = "Gentle Pelvic Tilts"
+                        exercise["instructions"] = "Stand against wall or sit in chair, gently tilt pelvis to support lower back."
+                        exercise["youtube_query"] = "pelvic tilts prenatal tutorial"
+                        warnings.append(f"Replaced high-impact '{ex_name}' with 'Gentle Pelvic Tilts' for pregnancy safety.")
+                    elif "push" in ex_name_lower:
+                        exercise["name"] = "Wall Push-ups"
+                        exercise["instructions"] = "Stand arm's length from wall, place hands flat on wall, bend elbows gently."
+                        exercise["youtube_query"] = "wall push-ups prenatal tutorial"
+                        warnings.append(f"Replaced floor '{ex_name}' with 'Wall Push-ups' for pregnancy safety.")
+                    elif "lunge" in ex_name_lower or "squat" in ex_name_lower:
+                        exercise["name"] = "Chair Squats (Assisted)"
+                        exercise["instructions"] = "Sit back into chair gently with hands supported."
+                        exercise["youtube_query"] = "chair squats prenatal tutorial"
+                    else:
+                        exercise["name"] = "Seated Torso Mobility"
+                        exercise["instructions"] = "Perform gentle seated mobility stretches."
+                    
+                    exercise["sets"] = 2
+                    exercise["reps"] = "8-10"
+                    exercise["rest_seconds"] = 90
 
                 # Senior / Knee / Asthma / Diabetes Safety Replacement Rules
                 elif has_knee_issues or "asthma" in combined_text or "knee" in combined_text or "diabetes" in combined_text:

@@ -265,4 +265,16 @@ def get_all_workouts(db: Session, user_id: int) -> list:
             "reasoning": s.reasoning or "",
             "calories_estimate": s.calories_burned_estimate,
         })
+
+    # Always sanitize returned workout plan for user's age, pregnancy, injuries & medical conditions
+    try:
+        from app.agents.workout_agent import WorkoutAgent
+        from app.agents.base import AgentContext
+        w_agent = WorkoutAgent("dummy")
+        hp = profile.to_agent_context() if profile else {}
+        ctx = AgentContext(user_id=user_id, health_profile=hp, db=db)
+        result, _ = w_agent._apply_safety_filter(result, ctx)
+    except Exception as e:
+        print(f"Notice: workout safety filter pass: {e}")
+
     return result
