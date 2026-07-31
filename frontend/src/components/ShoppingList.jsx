@@ -88,20 +88,6 @@ export default function ShoppingList({ items: initialItems, bigbasketUrl }) {
                         </div>
                     </motion.div>
                 ))}
-            </div>
-
-            {items.length > 0 && (
-                <div className="pt-4">
-                    <a
-                        href={bigbasketUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-2 justify-center w-full py-3 rounded-xl bg-green-500/20 text-green-400 font-bold border border-green-500/30 hover:bg-green-500/30 transition-all"
-                    >
-                        <ShoppingCart size={18} /> Order All on BigBasket
-                    </a>
-                </div>
-            )}
         </div>
     );
 }
