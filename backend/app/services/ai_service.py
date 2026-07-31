@@ -128,7 +128,57 @@ async def _db_aware_conversational_fallback(
         else:
             reply = "I've noted your exercise preference! You can ask me to swap or remove any exercise from your workout anytime."
 
-    # ── 3. GENERAL FITNESS & SAFETY QUESTIONS ─────────────────────────────────
+    # ── 3. HYDRATION & WATER INTAKE ──────────────────────────────────────────
+    elif has_word(["water", "hydration", "drink", "fluid"], msg):
+        try:
+            w_kg = int(user_profile.get("weight") or user_profile.get("weight_kg") or 70)
+        except (ValueError, TypeError):
+            w_kg = 70
+        base_water = round((w_kg * 35) / 1000, 1)
+        reply = (
+            f"Great question about hydration, {username}! 💧\n\n"
+            f"Based on your weight ({w_kg}kg), your baseline target is **{base_water} Liters** of water per day (~{int(base_water * 4)} glasses).\n\n"
+            f"💡 **Hydration Tips**:\n"
+            f"• Drink 500ml of water 30 minutes before your workout.\n"
+            f"• Sip water steadily during training — avoid gulping large quantities at once.\n"
+            f"• Hydrate post-workout to support muscle recovery and prevent cramps."
+        )
+
+    # ── 4. PROTEIN, CALORIES & MACROS ─────────────────────────────────────────
+    elif has_word(["protein", "macro", "macros", "deficit", "surplus", "calories"], msg):
+        goal = user_profile.get("fitness_goal") or user_profile.get("primary_goal") or "fitness"
+        reply = (
+            f"Here's the breakdown for your nutrition & macros, {username} 🥗\n\n"
+            f"🎯 **Goal**: {goal.replace('_', ' ').title()}\n"
+            f"• **Protein Target**: Aim for ~1.6g–2.2g of protein per kg of bodyweight to preserve lean muscle.\n"
+            f"• **Carbohydrates**: Fuel your workout sessions with complex carbs (oats, brown rice, millets, dal).\n"
+            f"• **Healthy Fats**: Support hormonal balance with seeds, olive oil, and paneer/tofu.\n\n"
+            f"Check your **Nutrition** tab for your full 7-day meal plan and macro breakdown!"
+        )
+
+    # ── 5. MUSCLE SORENESS & RECOVERY ─────────────────────────────────────────
+    elif has_word(["sore", "soreness", "doms", "pain", "stiff", "tired"], msg):
+        reply = (
+            f"I understand, {username}! Muscle soreness (DOMS) is completely natural after training. 🧘\n\n"
+            f"💡 **Recovery Advice**:\n"
+            f"1. **Active Recovery**: Light walking or gentle mobility stretching improves blood flow.\n"
+            f"2. **Sleep & Rest**: Aim for 7–8 hours of quality sleep to let your muscles rebuild.\n"
+            f"3. **Hydration**: Drink plenty of water to flush out metabolic waste.\n\n"
+            f"If you feel too sore today, tell me *\"I'm tired today\"* or *\"active recovery\"*, and I will adjust your workout to a gentle 20-min mobility session!"
+        )
+
+    # ── 6. PROGRESSIVE OVERLOAD & FORM ────────────────────────────────────────
+    elif has_word(["overload", "progressive", "form", "technique", "heavy", "weights"], msg):
+        reply = (
+            f"Progressive overload is the key to long-term progress, {username}! 📈\n\n"
+            f"💡 **How it works**:\n"
+            f"• **Master Form First**: Always prioritize strict, controlled movement before adding weight or reps.\n"
+            f"• **Gradual Increase**: Increase reps or weight by 5% each week once you comfortably reach the upper rep target.\n"
+            f"• **Tempo**: Lower weights under control (2–3 seconds down, 1 second up).\n\n"
+            f"All prescribed exercises in your plan include YouTube video tutorials to help you perfect your form!"
+        )
+
+    # ── 7. GENERAL FITNESS & SAFETY QUESTIONS ─────────────────────────────────
     elif any(w in msg for w in ["can i", "is it", "how do", "should i", "why", "what if"]):
         reply = (
             f"That's a great question, {username}! 💡\n\n"
