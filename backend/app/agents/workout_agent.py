@@ -259,8 +259,18 @@ Return ONLY this JSON structure:
                         exercise["rest_seconds"] = 90
 
                 # Senior / Knee / Asthma / Diabetes Safety Replacement Rules
-                elif has_knee_issues or "asthma" in combined_text or "knee" in combined_text:
-                    if "walking lunge" in ex_name_lower or "lunge" in ex_name_lower:
+                elif has_knee_issues or "asthma" in combined_text or "knee" in combined_text or "diabetes" in combined_text:
+                    if "push" in ex_name_lower:
+                        exercise["name"] = "Wall Push-ups"
+                        exercise["instructions"] = "Stand arm's length from wall, place hands flat on wall, lower chest gently."
+                        exercise["youtube_query"] = "wall push-ups senior tutorial"
+                        warnings.append(f"Replaced floor/heavy '{ex_name}' with joint-safe 'Wall Push-ups'.")
+                    elif "plank" in ex_name_lower:
+                        exercise["name"] = "Seated Torso Twists"
+                        exercise["instructions"] = "Sit tall in chair and gently twist shoulders left and right."
+                        exercise["youtube_query"] = "seated torso twists gentle"
+                        warnings.append(f"Replaced abdominal strain '{ex_name}' with 'Seated Torso Twists'.")
+                    elif "walking lunge" in ex_name_lower or "lunge" in ex_name_lower:
                         exercise["name"] = "Step-Ups"
                         exercise["instructions"] = "Step onto a low, sturdy step using a wall for balance."
                         exercise["youtube_query"] = "step ups tutorial"
@@ -275,6 +285,10 @@ Return ONLY this JSON structure:
                         exercise["instructions"] = "Sit back onto a sturdy chair with control and stand up gently."
                         exercise["youtube_query"] = "chair squats proper form tutorial"
                         warnings.append(f"Replaced explosive '{ex_name}' with joint-safe 'Chair Squats'.")
+                    elif "squat" in ex_name_lower:
+                        exercise["name"] = "Chair Squats"
+                        exercise["instructions"] = "Sit back onto a sturdy chair with control and stand up gently."
+                        exercise["youtube_query"] = "chair squats proper form tutorial"
 
                 # Reps and Rest Adjustment for Senior / Beginner
                 if is_senior and not is_pregnant:
