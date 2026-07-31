@@ -20,6 +20,13 @@ async def generate_7_day_plan(user_profile: dict, db: Session, user_id: int) -> 
     if not days_data:
         raise Exception("AI returned empty plan data")
 
+    # Apply WorkoutAgent safety pass (enforces age, asthma, knee, diabetes, pregnancy restrictions)
+    from app.agents.workout_agent import WorkoutAgent
+    from app.agents.base import AgentContext
+    dummy_agent = WorkoutAgent("dummy")
+    ctx = AgentContext(user_id=user_id, health_profile=user_profile, db=db)
+    days_data, _ = dummy_agent._apply_safety_filter(days_data, ctx)
+
     all_exercises = []
     for day_data in days_data:
         all_exercises.extend(day_data.get("exercises", []))

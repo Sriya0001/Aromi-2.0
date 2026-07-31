@@ -139,4 +139,8 @@ class HealthProfile(Base):
             "goal_deadline_weeks": self.goal_deadline_weeks,
             "meal_frequency": self.meal_frequency or 3,
             "years_training": self.years_training or 0,
+            "health_conditions": self.health_conditions or "none",
+            "injuries": self.injuries or "none",
+            "medical_history": self.medical_history or "none",
+            "allergies": self.allergies or "none",
         }

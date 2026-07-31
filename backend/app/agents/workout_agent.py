@@ -258,18 +258,23 @@ Return ONLY this JSON structure:
                         exercise["sets"] = 2
                         exercise["rest_seconds"] = 90
 
-                # Senior / Knee Safety Replacement Rules
-                elif has_knee_issues:
+                # Senior / Knee / Asthma / Diabetes Safety Replacement Rules
+                elif has_knee_issues or "asthma" in combined_text or "knee" in combined_text:
                     if "walking lunge" in ex_name_lower or "lunge" in ex_name_lower:
                         exercise["name"] = "Step-Ups"
                         exercise["instructions"] = "Step onto a low, sturdy step using a wall for balance."
                         exercise["youtube_query"] = "step ups tutorial"
                         warnings.append(f"Replaced '{ex_name}' with 'Step-Ups' to protect knee joints.")
-                    elif "jump" in ex_name_lower or "burpee" in ex_name_lower:
-                        exercise["name"] = "Glute Bridges"
-                        exercise["instructions"] = "Lie on back and gently raise hips."
-                        exercise["youtube_query"] = "glute bridge tutorial"
-                        warnings.append(f"Replaced high-impact '{ex_name}' with 'Glute Bridges'.")
+                    elif "mountain climber" in ex_name_lower or "climber" in ex_name_lower or "burpee" in ex_name_lower or "jump" in ex_name_lower:
+                        exercise["name"] = "Bird-Dog"
+                        exercise["instructions"] = "On hands and knees, extend opposite arm and leg straight out gently."
+                        exercise["youtube_query"] = "bird-dog senior tutorial"
+                        warnings.append(f"Replaced high-intensity '{ex_name}' with gentle 'Bird-Dog'.")
+                    elif "swing" in ex_name_lower:
+                        exercise["name"] = "Chair Squats"
+                        exercise["instructions"] = "Sit back onto a sturdy chair with control and stand up gently."
+                        exercise["youtube_query"] = "chair squats proper form tutorial"
+                        warnings.append(f"Replaced explosive '{ex_name}' with joint-safe 'Chair Squats'.")
 
                 # Reps and Rest Adjustment for Senior / Beginner
                 if is_senior and not is_pregnant:
