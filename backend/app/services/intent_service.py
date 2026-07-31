@@ -520,14 +520,18 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
         target_ex = re.sub(r'^(the|a|an)\s+', '', target_ex)
 
         alt_map = {
-            "plank": "Russian Twists",
-            "plank hold": "Russian Twists",
-            "push-up": "Dumbbell Chest Flyes",
-            "pushup": "Dumbbell Chest Flyes",
-            "squat": "Glute Bridges",
+            "russian twist": "Glute Bridges",
+            "russian twists": "Glute Bridges",
+            "plank": "Bird-Dog",
+            "plank hold": "Bird-Dog",
+            "push-up": "Wall Push-ups",
+            "pushup": "Wall Push-ups",
+            "squat": "Chair Squats",
             "lunge": "Step-Ups",
             "crunch": "Dead Bug",
             "burpee": "Jumping Jacks",
+            "swing": "Chair Squats",
+            "mountain climber": "Bird-Dog",
         }
 
         new_ex = None
@@ -536,7 +540,7 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
                 new_ex = v
                 break
         if not new_ex:
-            new_ex = "Russian Twists"
+            new_ex = "Glute Bridges"
 
         result = await replace_exercise_action(db, user_id, target_ex, new_ex, target_day)
         if result:

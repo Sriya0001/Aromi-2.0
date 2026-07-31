@@ -321,7 +321,24 @@ Return ONLY this JSON structure:
 
                 cleaned_exercises.append(exercise)
                 
-            session["exercises"] = cleaned_exercises
+            # Deduplicate exercise names per session so no exercise appears twice
+            seen_names = set()
+            deduped_exercises = []
+            fallback_alternatives = ["Wall Push-ups", "Glute Bridges", "Seated Calf Raises", "Bird-Dog", "Standing Side Leg Raises", "Chair Squats"]
+
+            for ex in cleaned_exercises:
+                ex_name = ex.get("name", "")
+                if ex_name.lower() in seen_names:
+                    for alt in fallback_alternatives:
+                        if alt.lower() not in seen_names:
+                            ex["name"] = alt
+                            ex["instructions"] = f"Gentle alternative to avoid repetitive exercise strain."
+                            ex["youtube_query"] = f"{alt.lower()} tutorial"
+                            break
+                seen_names.add(ex.get("name", "").lower())
+                deduped_exercises.append(ex)
+
+            session["exercises"] = deduped_exercises
             cleaned_sessions.append(session)
 
         return cleaned_sessions, warnings

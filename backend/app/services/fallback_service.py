@@ -492,10 +492,10 @@ FALLBACK_NUTRITION_PLAN = [
                 "prep_time": "30 min"
             },
             "pre_workout_snack": {
-                "name": "Handful of Mixed Nuts & Dates",
+                "name": "Handful of Roasted Seeds & Dates",
                 "calories": 210,
                 "protein_g": 6,
-                "ingredients": ["Walnuts 10g", "Almonds 10g", "Dates 2"],
+                "ingredients": ["Pumpkin Seeds 10g", "Sunflower Seeds 10g", "Dates 2"],
                 "prep_time": "1 min"
             },
             "dinner": {
@@ -842,8 +842,11 @@ def get_fallback_workout_plan(user_profile: dict = None) -> Dict[str, Any]:
             age = 25
 
         fitness_lvl = str(user_profile.get("fitness_level") or "").lower()
+        prof_str = str(user_profile).lower()
+        is_pregnant = user_profile.get("is_pregnant") or "pregnant" in prof_str or "pregnancy" in prof_str
+        is_sensitive = age >= 50 or "senior" in fitness_lvl or "knee" in prof_str or "asthma" in prof_str or "diabetes" in prof_str or "back" in prof_str
 
-        if age >= 50 or "senior" in fitness_lvl:
+        if is_pregnant or is_sensitive:
             return {"plan": SENIOR_FALLBACK_WORKOUT_PLAN}
 
     return {"plan": FALLBACK_WORKOUT_PLAN}
