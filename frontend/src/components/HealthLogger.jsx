@@ -19,22 +19,21 @@ export default function HealthLogger({ isOpen, onClose }) {
             if (activeTab === 'sleep') {
                 if (!sleepData.hours) throw new Error("Please enter sleep hours");
                 await logSleep({
-                    date: sleepData.date,
-                    hours: parseFloat(sleepData.hours),
+                    sleep_date: sleepData.date,
+                    duration_hours: parseFloat(sleepData.hours),
                     quality_score: sleepData.quality,
-                    hrv_score: sleepData.hrv ? parseInt(sleepData.hrv) : null
+                    hrv_ms: sleepData.hrv ? parseFloat(sleepData.hrv) : null
                 });
             } else if (activeTab === 'hydration') {
                 if (hydrationData.amount_ml <= 0) throw new Error("Please add some water");
                 await logHydration({
-                    date: new Date().toISOString().split('T')[0],
-                    amount_ml: hydrationData.amount_ml
+                    log_date: new Date().toISOString().split('T')[0],
+                    water_ml: hydrationData.amount_ml
                 });
                 setHydrationData({ amount_ml: 0 }); // reset
             } else if (activeTab === 'progress') {
                 if (!progressData.weight_kg) throw new Error("Please enter weight");
                 await logProgress({
-                    date: new Date().toISOString().split('T')[0],
                     weight_kg: parseFloat(progressData.weight_kg),
                     body_fat_pct: progressData.body_fat_pct ? parseFloat(progressData.body_fat_pct) : null,
                     notes: progressData.notes
@@ -43,7 +42,11 @@ export default function HealthLogger({ isOpen, onClose }) {
             toast.success(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} logged successfully!`);
             if (activeTab !== 'hydration') onClose();
         } catch (error) {
-            toast.error(error.message || 'Failed to log data');
+            const detail = error.response?.data?.detail;
+            const msg = detail 
+                ? (typeof detail === 'string' ? detail : JSON.stringify(detail))
+                : (error.message || 'Failed to log data');
+            toast.error(msg);
         } finally {
             setIsSubmitting(false);
         }

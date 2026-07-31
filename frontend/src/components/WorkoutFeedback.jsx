@@ -23,12 +23,12 @@ export default function WorkoutFeedback({ workoutId, onClose, onSuccess }) {
         setIsSubmitting(true);
         try {
             await submitWorkoutFeedback({
-                workout_id: workoutId,
+                session_id: workoutId,
                 status,
-                difficulty,
-                rating,
-                duration_minutes: duration ? parseInt(duration) : null,
-                notes
+                difficulty_felt: difficulty === 'just_right' ? 'right' : difficulty,
+                user_rating: rating || null,
+                actual_duration_min: duration ? parseInt(duration) : null,
+                user_feedback: notes || null
             });
             
             setShowSuccess(true);
@@ -37,7 +37,11 @@ export default function WorkoutFeedback({ workoutId, onClose, onSuccess }) {
                 if (onClose) onClose();
             }, 2000);
         } catch (error) {
-            toast.error('Failed to submit feedback');
+            const detail = error.response?.data?.detail;
+            const msg = detail 
+                ? (typeof detail === 'string' ? detail : JSON.stringify(detail))
+                : (error.message || 'Failed to submit feedback');
+            toast.error(msg);
         } finally {
             setIsSubmitting(false);
         }
