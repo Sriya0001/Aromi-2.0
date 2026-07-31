@@ -76,7 +76,34 @@ async def complete_workout(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Log a completed workout and update progress metrics."""
+    """Log a completed workout and update progress metrics and WorkoutSession status."""
+    from app.models.workout import WorkoutSession
+    today = date.today()
+
+    session = db.query(WorkoutSession).filter(
+        WorkoutSession.user_id == current_user.id,
+        WorkoutSession.session_date == today
+    ).first()
+
+    if session:
+        session.status = "completed"
+        session.completion_pct = 1.0
+        session.calories_burned_estimate = int(calories_burned)
+        session.actual_duration_min = duration_minutes
+    else:
+        session = WorkoutSession(
+            user_id=current_user.id,
+            session_date=today,
+            day_name=today.strftime("%A"),
+            focus_area="Full Body Workout",
+            planned_duration_min=duration_minutes,
+            actual_duration_min=duration_minutes,
+            status="completed",
+            completion_pct=1.0,
+            calories_burned_estimate=int(calories_burned)
+        )
+        db.add(session)
+
     # Log as a ProgressMetric entry (new schema)
     metric = ProgressMetric(
         user_id=current_user.id,

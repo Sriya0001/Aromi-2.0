@@ -123,7 +123,7 @@ export default function WorkoutPage() {
     const [isFavouriting, setIsFavouriting] = useState(false)
 
     const location = useLocation()
-    const { user, setUser, workoutPlan, setWorkoutPlan } = useStore()
+    const { user, setUser, workoutPlan, setWorkoutPlan, setStats } = useStore()
 
     useEffect(() => {
         setLoading(true)
@@ -169,6 +169,8 @@ export default function WorkoutPage() {
             const { data } = await workoutAPI.completeWorkout(cals, sets, todayPlan?.duration_minutes || 45)
             await progressAPI.log({ calories_burned: cals, workouts_completed: 1, sets_completed: sets, workout_duration: todayPlan?.duration_minutes || 45 })
             setCompletionMsg({ message: data.message, calories: cals, sets })
+            const statsRes = await progressAPI.getStats()
+            setStats(statsRes.data)
         } catch (err) {
             toast.error('Failed to log workout')
         } finally {

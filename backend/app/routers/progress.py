@@ -22,6 +22,8 @@ def log_progress(
     db: Session = Depends(get_db)
 ):
     """Log daily progress into ProgressMetric (new schema)."""
+    from app.models.workout import WorkoutSession
+    
     note_parts = []
     if calories_burned:
         note_parts.append(f"{calories_burned} kcal burned")
@@ -35,6 +37,29 @@ def log_progress(
         note_parts.append(f"{healthy_meals} healthy meals")
     if notes:
         note_parts.append(notes)
+
+    if workouts_completed > 0:
+        today = date.today()
+        session = db.query(WorkoutSession).filter(
+            WorkoutSession.user_id == current_user.id,
+            WorkoutSession.session_date == today
+        ).first()
+        if session:
+            session.status = "completed"
+            session.completion_pct = 1.0
+            if calories_burned:
+                session.calories_burned_estimate = int(calories_burned)
+        else:
+            session = WorkoutSession(
+                user_id=current_user.id,
+                session_date=today,
+                day_name=today.strftime("%A"),
+                focus_area="Full Body Workout",
+                status="completed",
+                completion_pct=1.0,
+                calories_burned_estimate=int(calories_burned) if calories_burned else 200
+            )
+            db.add(session)
 
     metric = ProgressMetric(
         user_id=current_user.id,
@@ -87,7 +112,42 @@ def get_progress_stats(
 ):
     """Aggregated stats for the dashboard."""
     from app.models.workout import WorkoutSession
-    from datetime import timedelta
+
+    # Reconcile any ProgressMetric entries logged for workouts that don't have WorkoutSession marked completed
+    metrics_with_workouts = db.query(ProgressMetric).filter(
+        ProgressMetric.user_id == current_user.id,
+        ProgressMetric.notes.like("%Workout%")
+    ).all()
+
+    for m in metrics_with_workouts:
+        m_date = m.recorded_at.date()
+        existing = db.query(WorkoutSession).filter(
+            WorkoutSession.user_id == current_user.id,
+            WorkoutSession.session_date == m_date,
+            WorkoutSession.status == "completed"
+        ).first()
+        if not existing:
+            ws = db.query(WorkoutSession).filter(
+                WorkoutSession.user_id == current_user.id,
+                WorkoutSession.session_date == m_date
+            ).first()
+            if ws:
+                ws.status = "completed"
+                ws.completion_pct = 1.0
+                if not ws.calories_burned_estimate:
+                    ws.calories_burned_estimate = 200
+            else:
+                ws = WorkoutSession(
+                    user_id=current_user.id,
+                    session_date=m_date,
+                    day_name=m_date.strftime("%A"),
+                    focus_area="Full Body Workout",
+                    status="completed",
+                    completion_pct=1.0,
+                    calories_burned_estimate=200
+                )
+                db.add(ws)
+            db.commit()
 
     # Workout stats from WorkoutSession
     completed_sessions = db.query(WorkoutSession).filter(
