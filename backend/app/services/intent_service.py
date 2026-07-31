@@ -122,16 +122,31 @@ async def replace_exercise_action(db: Session, user_id: int, old_name: str, new_
             target_workouts.append(s)
 
     old_lower = old_name.lower().strip()
+    fallback_pool = ["Bird-Dog", "Seated Calf Raises", "Wall Push-ups", "Chair Squats", "Dead Bug", "Standing Side Leg Raises", "Jumping Jacks", "Step-Ups"]
 
     for workout in target_workouts:
         exercises = _get_exercises(workout)
         found_in_session = False
+        replaced_names = []
+        existing_names = [e.get("name", "").lower() for e in exercises]
+
         for ex in exercises:
             ex_name = ex.get('name', '').lower()
             if old_lower in ex_name or ex_name in old_lower or any(w in ex_name for w in old_lower.split() if len(w) > 3):
-                ex['name'] = new_name.title()
+                # Pick unique replacement name that isn't old_name and isn't already used in session
+                chosen = new_name.title()
+                if chosen.lower() == old_lower or chosen.lower() in existing_names:
+                    for cand in fallback_pool:
+                        if cand.lower() != old_lower and cand.lower() not in existing_names:
+                            chosen = cand
+                            break
+
+                ex['name'] = chosen
                 ex['instructions'] = f"Replacement for {old_name}. Perform with good form."
-                ex['youtube_query'] = f"{new_name} proper form"
+                ex['youtube_query'] = f"{chosen} proper form"
+                existing_names.append(chosen.lower())
+                replaced_names.append(chosen)
+
                 from app.services.youtube_service import enrich_exercise
                 await enrich_exercise(ex)
                 found_in_session = True
@@ -141,7 +156,9 @@ async def replace_exercise_action(db: Session, user_id: int, old_name: str, new_
             db.commit()
             db.refresh(workout)
             found_day = workout.day_name or f"Day {workout.day_of_week}"
-            return f"Replaced '{old_name}' with '{new_name}' in {found_day} workout."
+            distinct_replaced = list(dict.fromkeys(replaced_names))
+            names_str = " & ".join(distinct_replaced)
+            return f"Replaced '{old_name}' with '{names_str}' in {found_day} workout."
 
     return None
 
@@ -520,6 +537,9 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
         target_ex = re.sub(r'^(the|a|an)\s+', '', target_ex)
 
         alt_map = {
+            "glute bridge": "Bird-Dog",
+            "glute bridges": "Bird-Dog",
+            "bridge": "Bird-Dog",
             "russian twist": "Glute Bridges",
             "twist": "Seated Torso Twists",
             "plank": "Bird-Dog",
@@ -553,8 +573,13 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
             if k in target_ex.lower():
                 new_ex = v
                 break
-        if not new_ex:
-            new_ex = "Glute Bridges"
+
+        fallback_candidates = ["Bird-Dog", "Chair Squats", "Wall Push-ups", "Seated Calf Raises", "Dead Bug"]
+        if not new_ex or new_ex.lower() == target_ex.lower() or target_ex.lower() in new_ex.lower():
+            for cand in fallback_candidates:
+                if cand.lower() != target_ex.lower() and target_ex.lower() not in cand.lower():
+                    new_ex = cand
+                    break
 
         result = await replace_exercise_action(db, user_id, target_ex, new_ex, target_day)
         if result:
