@@ -141,7 +141,12 @@ def get_today_workout(db: Session, user_id: int, day: int = None) -> dict:
 
 
 def get_all_workouts(db: Session, user_id: int) -> list:
-    """Get the current week's workout sessions in the shape the frontend expects."""
+    """Get the current week's workout sessions. Requires completed health assessment."""
+    from app.models.health_profile import HealthProfile
+    profile = db.query(HealthProfile).filter(HealthProfile.user_id == user_id).first()
+    if not profile or profile.assessment_completed != "yes":
+        return []
+
     today = date.today()
     monday = today - timedelta(days=today.weekday())
     sunday = monday + timedelta(days=6)

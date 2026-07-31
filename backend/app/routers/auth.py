@@ -26,6 +26,13 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Initialize HealthProfile with assessment_completed="no"
+    from app.models.health_profile import HealthProfile
+    hp = HealthProfile(user_id=user.id, assessment_completed="no", profile_complete=False)
+    db.add(hp)
+    db.commit()
+
     return user
 
 

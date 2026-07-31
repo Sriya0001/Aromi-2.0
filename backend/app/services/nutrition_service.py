@@ -77,7 +77,12 @@ async def generate_meal_plan(user_profile: dict, db: Session, user_id: int) -> l
 
 
 def get_all_nutrition(db: Session, user_id: int) -> list:
-    """Get all saved nutrition plans. Auto-regenerates if saved plan is incomplete (<7 days)."""
+    """Get all saved nutrition plans. Requires completed health assessment."""
+    from app.models.health_profile import HealthProfile
+    profile = db.query(HealthProfile).filter(HealthProfile.user_id == user_id).first()
+    if not profile or profile.assessment_completed != "yes":
+        return []
+
     plans = db.query(NutritionPlan).filter(
         NutritionPlan.user_id == user_id
     ).order_by(NutritionPlan.day).all()

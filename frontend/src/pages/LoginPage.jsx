@@ -29,7 +29,11 @@ export default function LoginPage() {
             })()
             setAuth(user, data.access_token)
             toast.success(`Welcome back, ${user.username}! 💪`)
-            navigate('/dashboard')
+            if (user.assessment_completed !== 'yes') {
+                navigate('/assessment')
+            } else {
+                navigate('/dashboard')
+            }
         } catch (err) {
             const detail = err.response?.data?.detail
             if (err.response?.status === 404 || detail === 'User not registered') {
