@@ -89,5 +89,6 @@ export default function ShoppingList({ items: initialItems, bigbasketUrl }) {
                     </motion.div>
                 ))}
         </div>
+    </div>
     );
 }
