@@ -521,17 +521,31 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
 
         alt_map = {
             "russian twist": "Glute Bridges",
-            "russian twists": "Glute Bridges",
+            "twist": "Seated Torso Twists",
             "plank": "Bird-Dog",
-            "plank hold": "Bird-Dog",
             "push-up": "Wall Push-ups",
             "pushup": "Wall Push-ups",
+            "push up": "Wall Push-ups",
+            "bench press": "Dumbbell Chest Flyes",
+            "chest press": "Dumbbell Chest Flyes",
             "squat": "Chair Squats",
             "lunge": "Step-Ups",
+            "deadlift": "Glute Bridges",
             "crunch": "Dead Bug",
+            "sit-up": "Dead Bug",
+            "situp": "Dead Bug",
             "burpee": "Jumping Jacks",
             "swing": "Chair Squats",
             "mountain climber": "Bird-Dog",
+            "climber": "Bird-Dog",
+            "row": "Band Pull-Aparts",
+            "pull-up": "Band Pull-Aparts",
+            "lat pulldown": "Band Pull-Aparts",
+            "curl": "Standing Bicep Curls",
+            "dip": "Tricep Kickbacks",
+            "shoulder press": "Side Lateral Raises",
+            "overhead press": "Side Lateral Raises",
+            "calf raise": "Seated Calf Raises",
         }
 
         new_ex = None
