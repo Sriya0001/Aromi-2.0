@@ -37,16 +37,23 @@ export default function NutritionPage() {
     const [activeTab, setActiveTab] = useState('today') // 'today', 'week', 'shopping'
     const [loading, setLoading] = useState(true)
 
+    const dedupPlan = (list) => {
+        if (!Array.isArray(list)) return []
+        const map = new Map()
+        list.forEach(item => map.set(item.day, item))
+        return Array.from(map.values()).sort((a, b) => a.day - b.day)
+    }
+
     useEffect(() => {
         if (nutritionPlan && nutritionPlan.length > 0) {
-            setPlan(nutritionPlan)
+            setPlan(dedupPlan(nutritionPlan))
         }
     }, [nutritionPlan])
 
     useEffect(() => {
         Promise.all([nutritionAPI.getPlan(), nutritionAPI.getShoppingList()])
-            .then(([plan, shop]) => {
-                setPlan(plan.data.plan || [])
+            .then(([planRes, shop]) => {
+                setPlan(dedupPlan(planRes.data.plan || []))
                 setShopping(shop.data)
                 setLoading(false)
             })

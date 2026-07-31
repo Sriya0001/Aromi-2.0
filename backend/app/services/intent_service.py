@@ -108,31 +108,42 @@ def remove_exercise_action(db: Session, user_id: int, exercise_name: str, day_nu
 
 
 async def replace_exercise_action(db: Session, user_id: int, old_name: str, new_name: str, day_num: Optional[int] = None) -> str:
-    workout = _get_target_workout(db, user_id, day_num)
-    if not workout:
-        return None
-    exercises = _get_exercises(workout)
-    found = False
+    target_workouts = []
+    if day_num is not None:
+        target_w = _get_target_workout(db, user_id, day_num)
+        if target_w:
+            target_workouts.append(target_w)
+
+    all_sessions = db.query(WorkoutSession).filter(
+        WorkoutSession.user_id == user_id
+    ).order_by(WorkoutSession.day_of_week).all()
+    for s in all_sessions:
+        if s not in target_workouts:
+            target_workouts.append(s)
+
     old_lower = old_name.lower().strip()
 
-    for ex in exercises:
-        ex_name = ex.get('name', '').lower()
-        if old_lower in ex_name or ex_name in old_lower or any(w in ex_name for w in old_lower.split() if len(w) > 3):
-            ex['name'] = new_name.title()
-            ex['instructions'] = f"Replacement for {old_name}. Perform with good form."
-            ex['youtube_query'] = f"{new_name} proper form"
-            from app.services.youtube_service import enrich_exercise
-            await enrich_exercise(ex)
-            found = True
+    for workout in target_workouts:
+        exercises = _get_exercises(workout)
+        found_in_session = False
+        for ex in exercises:
+            ex_name = ex.get('name', '').lower()
+            if old_lower in ex_name or ex_name in old_lower or any(w in ex_name for w in old_lower.split() if len(w) > 3):
+                ex['name'] = new_name.title()
+                ex['instructions'] = f"Replacement for {old_name}. Perform with good form."
+                ex['youtube_query'] = f"{new_name} proper form"
+                from app.services.youtube_service import enrich_exercise
+                await enrich_exercise(ex)
+                found_in_session = True
 
-    if not found:
-        return None
-    
-    _set_exercises(workout, exercises)
-    db.commit()
-    db.refresh(workout)
-    day_str = workout.day_name or "today's"
-    return f"Replaced '{old_name}' with '{new_name}' in {day_str} workout."
+        if found_in_session:
+            _set_exercises(workout, exercises)
+            db.commit()
+            db.refresh(workout)
+            found_day = workout.day_name or f"Day {workout.day_of_week}"
+            return f"Replaced '{old_name}' with '{new_name}' in {found_day} workout."
+
+    return None
 
 
 async def add_exercise_action(db: Session, user_id: int, exercise_name: str, day_num: Optional[int] = None) -> str:
@@ -253,6 +264,45 @@ def fatigue_workout_action(db: Session, user_id: int, day_num: Optional[int] = N
     db.commit()
     db.refresh(workout)
     return "Recognized low energy/fatigue — switched today to a 25-min active recovery & mobility session! 🧘"
+
+
+def senior_gentle_workout_action(db: Session, user_id: int, day_num: Optional[int] = None) -> str:
+    all_sessions = db.query(WorkoutSession).filter(
+        WorkoutSession.user_id == user_id
+    ).all()
+    if not all_sessions:
+        target_w = _get_target_workout(db, user_id, day_num)
+        if target_w:
+            all_sessions = [target_w]
+
+    if not all_sessions:
+        return None
+
+    senior_plan_templates = [
+        [
+            {"name": "Chair Squats", "sets": 2, "reps": "8-10", "rest_seconds": 90, "muscle_group": "Quadriceps & Glutes", "instructions": "Sit back onto a sturdy chair with control and stand up gently. Keep chest open.", "youtube_query": "chair squats proper form tutorial"},
+            {"name": "Wall Push-ups", "sets": 2, "reps": "8-10", "rest_seconds": 90, "muscle_group": "Chest & Arms", "instructions": "Stand arm's length from wall, place hands flat, bend elbows gently.", "youtube_query": "wall push-ups senior tutorial"},
+            {"name": "Glute Bridges", "sets": 2, "reps": "10", "rest_seconds": 90, "muscle_group": "Glutes & Lower Back", "instructions": "Lie on back, knees bent, lift hips gently off ground.", "youtube_query": "glute bridges senior exercise"},
+            {"name": "Seated Calf Raises", "sets": 2, "reps": "12", "rest_seconds": 60, "muscle_group": "Calves", "instructions": "Sit upright and press up onto toes, holding for 1 sec.", "youtube_query": "seated calf raises tutorial"}
+        ],
+        [
+            {"name": "Bird-Dog", "sets": 2, "reps": "8 per side", "rest_seconds": 90, "muscle_group": "Core & Back Stability", "instructions": "On hands and knees, extend opposite arm and leg straight out gently.", "youtube_query": "bird-dog exercise senior tutorial"},
+            {"name": "Standing Side Leg Raises", "sets": 2, "reps": "10 per leg", "rest_seconds": 60, "muscle_group": "Hips & Balance", "instructions": "Hold onto a wall or chair for balance, lift leg out to side.", "youtube_query": "standing side leg raises senior"},
+            {"name": "Seated Torso Twists", "sets": 2, "reps": "10 per side", "rest_seconds": 60, "muscle_group": "Core & Mobility", "instructions": "Sit tall in chair and gently twist shoulders left and right.", "youtube_query": "seated torso twists gentle"}
+        ]
+    ]
+
+    for idx, session in enumerate(all_sessions):
+        template = [dict(ex) for ex in senior_plan_templates[idx % len(senior_plan_templates)]]
+        _set_exercises(session, template)
+        session.planned_duration_min = 25
+        session.warmup = "5 min gentle ankle, shoulder, and neck mobility"
+        session.cooldown = "5 min seated deep breathing & hamstring stretch"
+        session.tips = json.dumps("Senior Gentle Program Active: Low impact, joint safe, 90s rest per set.")
+
+    db.commit()
+
+    return "I completely agree with you! High-impact lunges and high reps can be far too demanding on the knees and joints. I have automatically adapted your entire workout plan right now to a **Gentle Low-Impact Senior Routine** (featuring Chair Squats, Wall Push-ups, and Glute Bridges with 2 sets of 8-10 reps and 90s rest). Check your updated workout plan!"
 
 
 def injury_workout_action(db: Session, user_id: int, body_part: str, day_num: Optional[int] = None) -> str:
@@ -410,6 +460,15 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
             if result:
                 return result, True
 
+    # 0. Senior / Impossible / Too hard for age
+    if any(phrase in msg for phrase in [
+        "not possible", "impossible", "too hard", "too intense", "60 yr old", "60 years old",
+        "70 yr old", "70 years old", "senior", "too much for me", "knee pain", "bad knees", "hard on knees"
+    ]):
+        result = senior_gentle_workout_action(db, user_id, target_day)
+        if result:
+            return result, True
+
     # 1. Injury / Body part pain
     for part in INJURY_BODY_PARTS:
         if part in msg and any(sig in msg for sig in INJURY_SIGNALS):
@@ -451,7 +510,41 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
         if result:
             return result, True
 
-    # 6. Remove + replace
+    # 6. Dislike / Swap / Alternative request
+    dislike_match = re.search(
+        r"(?:don't like|dont like|hate|dislike|don't want|dont want|swap|change|substitute|alternative for)\s+(.+?)(?:[.,!?]|\s+can\b|\s+could\b|\s+please|\s+suggest|\s+with|\s+for|$)",
+        msg
+    )
+    if dislike_match:
+        target_ex = dislike_match.group(1).strip()
+        target_ex = re.sub(r'^(the|a|an)\s+', '', target_ex)
+
+        alt_map = {
+            "plank": "Russian Twists",
+            "plank hold": "Russian Twists",
+            "push-up": "Dumbbell Chest Flyes",
+            "pushup": "Dumbbell Chest Flyes",
+            "squat": "Glute Bridges",
+            "lunge": "Step-Ups",
+            "crunch": "Dead Bug",
+            "burpee": "Jumping Jacks",
+        }
+
+        new_ex = None
+        for k, v in alt_map.items():
+            if k in target_ex.lower():
+                new_ex = v
+                break
+        if not new_ex:
+            new_ex = "Russian Twists"
+
+        result = await replace_exercise_action(db, user_id, target_ex, new_ex, target_day)
+        if result:
+            return result + f" Suggested alternative **{new_ex}** is great for your progression! 🎯", True
+        else:
+            return f"I've noted that you don't like **{target_ex}**! I recommend **{new_ex}** as a great alternative. Tell me if you'd like to replace any specific exercise in your plan with **{new_ex}**! 💪", True
+
+    # 6b. Remove + replace
     remove_and_replace = re.search(
         r'remove\s+(.+?)\s+and\s+(?:replace|substitute)\s+(?:it\s+)?with\s+(.+?)(?:[.,!?]|$)',
         msg

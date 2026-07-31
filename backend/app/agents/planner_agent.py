@@ -273,8 +273,101 @@ class PlannerAgent(BaseAgent):
     async def _persist_plan(self, context: AgentContext, workout_output: AgentOutput,
                              nutrition_output: AgentOutput, recovery_signal: dict,
                              adaptation: AdaptationAction) -> str:
-        # Placeholder for DB saving logic
-        return "plan_uuid_placeholder"
+        if context.db is None:
+            return "no_db"
+
+        db = context.db
+        user_id = context.user_id
+        import json
+        from datetime import date, timedelta
+        from app.models.workout import WeeklyPlan, WorkoutSession
+        from app.models.nutrition import NutritionPlan
+
+        DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+        # Persist Workout Plan
+        workout_sessions = workout_output.data.get("sessions", []) if workout_output.success else []
+        if workout_sessions:
+            try:
+                today = date.today()
+                monday = today - timedelta(days=today.weekday())
+
+                existing_plan = db.query(WeeklyPlan).filter(
+                    WeeklyPlan.user_id == user_id,
+                    WeeklyPlan.week_start_date == monday,
+                    WeeklyPlan.plan_status == "active"
+                ).first()
+                if existing_plan:
+                    existing_plan.plan_status = "superseded"
+                    db.query(WorkoutSession).filter(
+                        WorkoutSession.weekly_plan_id == existing_plan.id
+                    ).delete()
+
+                plan = WeeklyPlan(
+                    user_id=user_id,
+                    week_start_date=monday,
+                    generated_by="planner_agent",
+                )
+                db.add(plan)
+                db.flush()
+
+                for day_data in workout_sessions:
+                    day_num = day_data.get("day", 1)
+                    exercises = day_data.get("exercises", [])
+                    session_date = monday + timedelta(days=day_num - 1)
+
+                    ws = WorkoutSession(
+                        user_id=user_id,
+                        weekly_plan_id=plan.id,
+                        session_date=session_date,
+                        day_of_week=day_num,
+                        day_name=day_data.get("day_name", DAYS[day_num - 1] if 1 <= day_num <= 7 else "Monday"),
+                        focus_area=day_data.get("focus", ""),
+                        planned_duration_min=day_data.get("duration_minutes", 45),
+                        exercises_planned=exercises,
+                        warmup=day_data.get("warmup", ""),
+                        cooldown=day_data.get("cooldown", ""),
+                        tips=json.dumps(day_data.get("tips", "")),
+                        calories_burned_estimate=day_data.get("calories_estimate", 250),
+                        day=day_num,
+                        exercises=json.dumps(exercises),
+                        reasoning=day_data.get("session_reasoning") or day_data.get("reasoning") or "",
+                    )
+                    db.add(ws)
+            except Exception as e:
+                print(f"Error persisting workout plan in planner: {e}")
+
+        # Persist Nutrition Plan
+        nutrition_days = nutrition_output.data.get("plan", []) if nutrition_output.success else []
+        if nutrition_days:
+            try:
+                db.query(NutritionPlan).filter(NutritionPlan.user_id == user_id).delete()
+                for day_data in nutrition_days:
+                    grocery = day_data.get("grocery_list", [])
+                    meals = day_data.get("meals", {})
+                    day_num = day_data.get("day", 1)
+                    day_name = day_data.get("day_name", DAYS[day_num - 1] if 1 <= day_num <= 7 else "Monday")
+                    calories = day_data.get("calories", 2000)
+
+                    nutrition = NutritionPlan(
+                        user_id=user_id,
+                        day=day_num,
+                        day_name=day_name,
+                        plan_data=json.dumps(meals),
+                        calories=calories,
+                        grocery_list=json.dumps(grocery)
+                    )
+                    db.add(nutrition)
+            except Exception as e:
+                print(f"Error persisting nutrition plan in planner: {e}")
+
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"DB commit error in planner_agent: {e}")
+
+        return "plan_persisted_success"
 
     def _log_evaluation_metrics(self, context: AgentContext, signals: AdaptiveSignals,
                                 recovery_signal: dict) -> None:

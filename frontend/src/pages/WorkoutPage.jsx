@@ -39,6 +39,76 @@ function WorkoutTimer({ onComplete }) {
     )
 }
 
+const CURATED_VIDEOS = {
+    "russian twist": "wkD8rjkodUI",
+    "russian twists": "wkD8rjkodUI",
+    "kettlebell": "YSxHifyI6s8",
+    "kettlebell swings": "YSxHifyI6s8",
+    "dumbbell swings": "YSxHifyI6s8",
+    "swing": "YSxHifyI6s8",
+    "swings": "YSxHifyI6s8",
+    "incline push-up": "IODxDxX7oi4",
+    "incline push-ups": "IODxDxX7oi4",
+    "push-up": "IODxDxX7oi4",
+    "push-ups": "IODxDxX7oi4",
+    "pushup": "IODxDxX7oi4",
+    "plank": "pSHjTRCQxIw",
+    "plank hold": "pSHjTRCQxIw",
+    "squat": "aclHkVaku9U",
+    "squats": "aclHkVaku9U",
+    "lunge": "QOVaHwm-Q6U",
+    "lunges": "QOVaHwm-Q6U",
+    "dumbbell chest flyes": "eozdVDA78K0",
+    "step-ups": "dXxApOi17yY",
+    "dead bug": "4XLEnwUr1d8",
+    "jumping jacks": "iSSAk4Xo4GA",
+    "mountain climbers": "zT-9L3CEcmk",
+    "bicycle crunches": "9FGilxCbdz8",
+    "crunches": "2pLT-ilgU6s",
+    "crunch": "2pLT-ilgU6s",
+    "glute bridge": "8bbE64NuDTU",
+    "bench press": "rT7DgCr-3pg",
+    "pull-ups": "eGo4IYlbE5g",
+    "dumbbell rows": "roCP6wCXPqo",
+    "bicep curls": "ykJmrZ5v0Oo",
+    "tricep dips": "0326dy_-CzM",
+    "shoulder press": "qEwKCR5JCog",
+}
+
+function getExerciseVideo(ex) {
+    if (ex?.video?.video_id && !ex.video.url?.includes('results?search_query=')) {
+        return {
+            video_id: ex.video.video_id,
+            url: ex.video.url || `https://www.youtube.com/watch?v=${ex.video.video_id}`
+        }
+    }
+    const nameLower = (ex?.name || '').toLowerCase()
+    let foundId = null
+    for (const [key, id] of Object.entries(CURATED_VIDEOS)) {
+        if (nameLower.includes(key) || key.includes(nameLower)) {
+            foundId = id
+            break
+        }
+    }
+    if (!foundId) {
+        if (nameLower.includes("twist")) foundId = "wkD8rjkodUI"
+        else if (nameLower.includes("push")) foundId = "IODxDxX7oi4"
+        else if (nameLower.includes("squat")) foundId = "aclHkVaku9U"
+        else if (nameLower.includes("lunge")) foundId = "QOVaHwm-Q6U"
+        else if (nameLower.includes("swing")) foundId = "YSxHifyI6s8"
+        else if (nameLower.includes("row")) foundId = "roCP6wCXPqo"
+        else if (nameLower.includes("press")) foundId = "qEwKCR5JCog"
+        else if (nameLower.includes("curl")) foundId = "ykJmrZ5v0Oo"
+        else if (nameLower.includes("dip")) foundId = "0326dy_-CzM"
+        else foundId = "pSHjTRCQxIw"
+    }
+
+    return {
+        video_id: foundId,
+        url: `https://www.youtube.com/watch?v=${foundId}`
+    }
+}
+
 export default function WorkoutPage() {
     const navigate = useNavigate()
     const [plan, setPlan] = useState([])
@@ -236,66 +306,70 @@ export default function WorkoutPage() {
                                     {/* Exercise List */}
                                     <div className="space-y-3">
                                         {(todayPlan.exercises || []).length > 0 ? (
-                                            todayPlan.exercises.map((ex, i) => (
-                                                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="glass-card p-4">
-                                                    <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedEx(expandedEx === i ? null : i)}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 text-sm font-bold">{i + 1}</div>
-                                                            <div>
-                                                                <p className="text-main font-medium">{ex.name}</p>
-                                                                <p className="text-muted text-xs">{ex.muscle_group || ''} • {ex.sets} sets × {ex.reps} reps</p>
+                                            todayPlan.exercises.map((ex, i) => {
+                                                const videoData = getExerciseVideo(ex)
+                                                return (
+                                                    <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="glass-card p-4">
+                                                        <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedEx(expandedEx === i ? null : i)}>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 text-sm font-bold">{i + 1}</div>
+                                                                <div>
+                                                                    <p className="text-main font-medium">{ex.name}</p>
+                                                                    <p className="text-muted text-xs">{ex.muscle_group || ''} • {ex.sets} sets × {ex.reps} reps</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleToggleFavourite(ex) }}
+                                                                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isExerciseFavourite(ex.name) ? 'bg-red-500/20 text-red-500' : 'bg-white/5 text-slate-500 hover:text-red-400 hover:bg-red-500/10'}`}
+                                                                >
+                                                                    <Heart size={14} fill={isExerciseFavourite(ex.name) ? "currentColor" : "none"} />
+                                                                </button>
+                                                                {videoData?.video_id && (
+                                                                    <button onClick={(e) => { e.stopPropagation(); setVideoEx(videoEx === i ? null : i) }}
+                                                                        className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-500/30 transition-all"
+                                                                        title="Play video in dashboard">
+                                                                        <Youtube size={14} />
+                                                                    </button>
+                                                                )}
+                                                                {expandedEx === i ? <ChevronUp size={16} className="text-muted" /> : <ChevronDown size={16} className="text-muted" />}
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleToggleFavourite(ex) }}
-                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isExerciseFavourite(ex.name) ? 'bg-red-500/20 text-red-500' : 'bg-white/5 text-slate-500 hover:text-red-400 hover:bg-red-500/10'}`}
-                                                            >
-                                                                <Heart size={14} fill={isExerciseFavourite(ex.name) ? "currentColor" : "none"} />
-                                                            </button>
-                                                            {ex.video?.video_id && (
-                                                                <button onClick={(e) => { e.stopPropagation(); setVideoEx(videoEx === i ? null : i) }}
-                                                                    className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-500/30 transition-all">
-                                                                    <Youtube size={14} />
-                                                                </button>
-                                                            )}
-                                                            {expandedEx === i ? <ChevronUp size={16} className="text-muted" /> : <ChevronDown size={16} className="text-muted" />}
-                                                        </div>
-                                                    </div>
 
-                                                    <AnimatePresence>
-                                                        {expandedEx === i && (
-                                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                                                <div className="mt-3 pt-3 border-t border-slate-700/10 space-y-2">
-                                                                    {ex.instructions && <p className="text-muted text-sm">{ex.instructions}</p>}
-                                                                    <div className="flex gap-4 text-sm">
-                                                                        <span className="text-muted">⏱ Rest: <span className="text-main font-medium">{ex.rest_seconds}s</span></span>
-                                                                        <span className="text-muted">💪 Sets: <span className="text-main font-medium">{ex.sets}</span></span>
-                                                                        <span className="text-muted">🔁 Reps: <span className="text-main font-medium">{ex.reps}</span></span>
+                                                        <AnimatePresence>
+                                                            {expandedEx === i && (
+                                                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                                                    <div className="mt-3 pt-3 border-t border-slate-700/10 space-y-2">
+                                                                        {ex.instructions && <p className="text-muted text-sm">{ex.instructions}</p>}
+                                                                        <div className="flex gap-4 text-sm">
+                                                                            <span className="text-muted">⏱ Rest: <span className="text-main font-medium">{ex.rest_seconds}s</span></span>
+                                                                            <span className="text-muted">💪 Sets: <span className="text-main font-medium">{ex.sets}</span></span>
+                                                                            <span className="text-muted">🔁 Reps: <span className="text-main font-medium">{ex.reps}</span></span>
+                                                                        </div>
+                                                                        {videoData && (
+                                                                            <a href={videoData.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-red-400 text-sm hover:text-red-300 font-medium">
+                                                                                <Youtube size={14} /> Watch Tutorial →
+                                                                            </a>
+                                                                        )}
                                                                     </div>
-                                                                    {ex.video && (
-                                                                        <a href={ex.video.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-red-400 text-sm hover:text-red-300 font-medium">
-                                                                            <Youtube size={14} /> Watch Tutorial →
-                                                                        </a>
-                                                                    )}
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
 
-                                                    {/* YouTube Embed */}
-                                                    {videoEx === i && ex.video?.video_id && (
-                                                        <div className="mt-3">
-                                                            <iframe
-                                                                src={`https://www.youtube.com/embed/${ex.video.video_id}`}
-                                                                className="w-full rounded-xl aspect-video"
-                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                allowFullScreen
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </motion.div>
-                                            ))
+                                                        {/* YouTube Embed */}
+                                                        {videoEx === i && videoData?.video_id && (
+                                                            <div className="mt-3">
+                                                                <iframe
+                                                                    src={`https://www.youtube.com/embed/${videoData.video_id}`}
+                                                                    className="w-full rounded-xl aspect-video"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                    allowFullScreen
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
+                                                )
+                                            })
                                         ) : (
                                             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card p-12 text-center rounded-3xl border-dashed border-2 border-purple-500/20">
                                                 <div className="text-5xl mb-4">🧘</div>

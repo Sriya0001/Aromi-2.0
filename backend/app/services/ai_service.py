@@ -96,8 +96,49 @@ async def _db_aware_conversational_fallback(
     if action_result:
         return action_result, plan_modified
 
-    # ── 1. WORKOUT ROUTINE ENQUIRIES ──────────────────────────────────────────
-    if any(w in msg for w in ["workout", "routine", "exercise", "today's plan", "schedule", "training"]):
+    def has_word(words, text):
+        pattern = r'\b(' + '|'.join(re.escape(w) for w in words) + r')\b'
+        return bool(re.search(pattern, text, re.IGNORECASE))
+
+    # ── 1. AGE, SAFETY & CAPABILITY ENQUIRIES ─────────────────────────────────
+    if any(w in msg for w in ["60", "70", "50", "80", "old", "age", "senior", "elderly", "can i do", "safe", "safely", "ability", "difficult", "hard"]):
+        reply = (
+            f"Yes, absolutely, {username}! 🌟\n\n"
+            f"AROMI's Multi-Agent Engine is designed with anatomical safety guardrails. "
+            f"All prescribed exercises account for your age, fitness level, and joint safety.\n\n"
+            f"💡 **Safety & Modification Tips**:\n"
+            f"1. **Listen to your body**: Perform repetitions at a controlled, comfortable pace.\n"
+            f"2. **Use modifications**: You can swap any movement for low-impact alternatives anytime.\n"
+            f"3. **Pacing**: Feel free to take extra rest seconds between sets.\n\n"
+            f"If any exercise feels uncomfortable, simply tell me (e.g., *\"Swap exercise X\"* or *\"I'm tired today\"*), and I will update your plan immediately! 💪"
+        )
+
+    # ── 2. EXERCISE SWAP & ALTERNATIVE ENQUIRIES ──────────────────────────────
+    elif has_word(["suggest", "alternative", "instead", "swap", "don't like", "dont like", "hate", "replace"], msg):
+        from app.services.workout_service import get_today_workout
+        today_w = get_today_workout(db, user_id)
+        if today_w and today_w.get("exercises"):
+            ex_names = [e.get("name") for e in today_w.get("exercises", []) if e.get("name")]
+            ex_str = ", ".join(ex_names[:4])
+            reply = (
+                f"I hear you! 🎯 I've noted your preference.\n\n"
+                f"In your current workout, you have: **{ex_str}**.\n\n"
+                f"You can tell me: *\"Replace plank hold with Russian twists\"* or *\"Remove plank hold\"*, and I will swap it in your plan right away!"
+            )
+        else:
+            reply = "I've noted your exercise preference! You can ask me to swap or remove any exercise from your workout anytime."
+
+    # ── 3. GENERAL FITNESS & SAFETY QUESTIONS ─────────────────────────────────
+    elif any(w in msg for w in ["can i", "is it", "how do", "should i", "why", "what if"]):
+        reply = (
+            f"That's a great question, {username}! 💡\n\n"
+            f"Your workout and nutrition plans are fully personalized for your goals, fitness level, and health profile. "
+            f"Always prioritize proper form, controlled breathing, and adequate hydration.\n\n"
+            f"Tell me if you'd like me to modify today's workout (*\"less time\"*, *\"swap exercise X\"*), or ask about your meal plan!"
+        )
+
+    # ── 2. WORKOUT ROUTINE ENQUIRIES ──────────────────────────────────────────
+    elif has_word(["workout", "routine", "exercise", "today's plan", "schedule", "training"], msg):
         from app.services.workout_service import get_today_workout
         today_w = get_today_workout(db, user_id)
 
@@ -132,8 +173,8 @@ async def _db_aware_conversational_fallback(
                 f"You can view today's target focus, exercise videos, and sets/reps breakdown there."
             )
 
-    # ── 2. NUTRITION & MEAL PLAN ENQUIRIES ────────────────────────────────────
-    elif any(w in msg for w in ["diet", "food", "nutrition", "meal", "eat", "lunch", "dinner", "breakfast", "calories"]):
+    # ── 3. NUTRITION & MEAL PLAN ENQUIRIES ────────────────────────────────────
+    elif has_word(["diet", "food", "nutrition", "meal", "eat", "lunch", "dinner", "breakfast", "calories"], msg):
         from app.services.nutrition_service import get_all_nutrition
         nutrition_plans = get_all_nutrition(db, user_id)
         
@@ -169,8 +210,8 @@ async def _db_aware_conversational_fallback(
                 f"Your customized 7-day Indian meal plan and weekly grocery list are ready in the **Nutrition** tab! 🥗"
             )
 
-    # ── 3. GREETINGS & INTROS ──────────────────────────────────────────────────
-    elif any(w in msg for w in ["hi", "hey", "hello", "namaste", "hlo", "greetings"]):
+    # ── 4. GREETINGS & INTROS ──────────────────────────────────────────────────
+    elif has_word(["hi", "hey", "hello", "namaste", "hlo", "greetings"], msg):
         responses = [
             f"Namaste {username}! 🙏 I'm AROMI, your AI Fitness & Wellness Coach. How are you feeling today?",
             f"Hey {username}! Ready to crush your wellness goals today? 💪 Tell me if you have extra time or short time for your workout!",
@@ -178,8 +219,8 @@ async def _db_aware_conversational_fallback(
         ]
         reply = random.choice(responses)
 
-    # ── 4. SENTIMENT & STATUS ──────────────────────────────────────────────────
-    elif any(w in msg for w in ["good", "great", "awesome", "fantastic", "well", "fine"]):
+    # ── 5. SENTIMENT & STATUS ──────────────────────────────────────────────────
+    elif has_word(["good", "great", "awesome", "fantastic", "well", "fine"], msg):
         responses = [
             f"Glad to hear that, {username}! That positive energy is perfect for today's workout session. 🔥",
             f"Awesome! Keeping a positive mindset is half the battle. Ready to check today's exercises? 🌟",
@@ -187,8 +228,8 @@ async def _db_aware_conversational_fallback(
         ]
         reply = random.choice(responses)
 
-    # ── 5. ACKNOWLEDGMENTS ─────────────────────────────────────────────────────
-    elif any(w in msg for w in ["okay", "ok", "cool", "alright", "got it", "sure"]):
+    # ── 6. ACKNOWLEDGMENTS ─────────────────────────────────────────────────────
+    elif has_word(["okay", "ok", "cool", "alright", "got it", "sure"], msg):
         responses = [
             "Awesome! Tell me if you'd like to check your routine, swap an exercise, or extend today's workout. 💪",
             "Sounds good! I'm right here whenever you want to adjust your schedule or log progress. ✨",
@@ -196,11 +237,11 @@ async def _db_aware_conversational_fallback(
         ]
         reply = random.choice(responses)
 
-    # ── 6. THANKS ──────────────────────────────────────────────────────────────
-    elif any(w in msg for w in ["thank", "thanks", "thx", "shukriya", "dhanyawad"]):
+    # ── 7. THANKS ──────────────────────────────────────────────────────────────
+    elif has_word(["thank", "thanks", "thx", "shukriya", "dhanyawad"], msg):
         reply = f"You're very welcome, {username}! Keep up the fantastic effort! 🙌"
 
-    # ── 7. DEFAULT INFORMED RESPONSE ───────────────────────────────────────────
+    # ── 8. DEFAULT INFORMED RESPONSE ───────────────────────────────────────────
     else:
         responses = [
             f"Namaste {username}! I'm here to guide your workouts, nutrition, and recovery. Tell me if you have *more time* or *less time* today, or ask me to swap/remove any exercise! 🌟",
@@ -223,7 +264,7 @@ async def _db_aware_conversational_fallback(
     return reply, plan_modified
 
 
-async def generate_plan_with_groq(prompt: str) -> dict:
+async def generate_plan_with_groq(prompt: str, user_profile: dict = None) -> dict:
     """Generate workout or nutrition plan using Groq, with graceful fallback on connection failure."""
     from app.services.fallback_service import get_fallback_workout_plan, get_fallback_nutrition_plan
 
@@ -232,7 +273,7 @@ async def generate_plan_with_groq(prompt: str) -> dict:
             print("WARNING: Groq API key missing/invalid. Falling back to rule-based plan generator.")
             if "nutrition" in prompt.lower() or "meal" in prompt.lower():
                 return get_fallback_nutrition_plan()
-            return get_fallback_workout_plan()
+            return get_fallback_workout_plan(user_profile)
 
         client = get_groq_client()
         
@@ -274,10 +315,10 @@ async def generate_plan_with_groq(prompt: str) -> dict:
             print(f"JSON parse error: {e}. Falling back to rule-based plan.")
             if "nutrition" in prompt.lower() or "meal" in prompt.lower():
                 return get_fallback_nutrition_plan()
-            return get_fallback_workout_plan()
+            return get_fallback_workout_plan(user_profile)
             
     except Exception as e:
         print(f"Groq API connection/service warning: {e}. Engaging offline fallback plan generator.")
         if "nutrition" in prompt.lower() or "meal" in prompt.lower():
             return get_fallback_nutrition_plan()
-        return get_fallback_workout_plan()
+        return get_fallback_workout_plan(user_profile)

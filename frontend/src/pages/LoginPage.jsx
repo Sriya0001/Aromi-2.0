@@ -12,10 +12,12 @@ export default function LoginPage() {
     const [form, setForm] = useState({ username: '', password: '' })
     const [show, setShow] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
+        setError('')
         try {
             const { data } = await authAPI.login(form.username, form.password)
             const { data: user } = await (async () => {
@@ -29,7 +31,16 @@ export default function LoginPage() {
             toast.success(`Welcome back, ${user.username}! 💪`)
             navigate('/dashboard')
         } catch (err) {
-            toast.error(err.response?.data?.detail || 'Login failed. Check your credentials.')
+            const detail = err.response?.data?.detail
+            if (err.response?.status === 404 || detail === 'User not registered') {
+                const msg = 'User not registered'
+                setError(msg)
+                toast.error('User not registered. Please sign up first.')
+            } else {
+                const msg = detail || 'Login failed. Check your credentials.'
+                setError(msg)
+                toast.error(msg)
+            }
         } finally {
             setLoading(false)
         }
@@ -54,6 +65,17 @@ export default function LoginPage() {
                     <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
                     <p className="text-slate-400 text-sm mt-1">Login to continue your fitness journey</p>
                 </div>
+
+                {error && (
+                    <div className="mb-6 p-4 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-sm flex items-center justify-between">
+                        <span>⚠️ {error}</span>
+                        {error === 'User not registered' && (
+                            <Link to="/register" className="text-purple-400 hover:text-purple-300 font-semibold underline ml-2">
+                                Register now
+                            </Link>
+                        )}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>

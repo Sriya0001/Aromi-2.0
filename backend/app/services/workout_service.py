@@ -14,7 +14,7 @@ async def generate_7_day_plan(user_profile: dict, db: Session, user_id: int) -> 
     import asyncio
 
     prompt = get_workout_prompt(user_profile)
-    plan_data = await generate_plan_with_groq(prompt)
+    plan_data = await generate_plan_with_groq(prompt, user_profile)
 
     days_data = plan_data.get("plan", [])
     if not days_data:
@@ -160,6 +160,54 @@ def get_all_workouts(db: Session, user_id: int) -> list:
             WorkoutSession.day_of_week
         ).limit(7).all()
         sessions = sorted(sessions, key=lambda s: s.day_of_week or 0)
+
+    # If still no sessions exist for user, generate fallback 7-day plan
+    if not sessions:
+        try:
+            from app.services.fallback_service import get_fallback_workout_plan
+            fallback_data = get_fallback_workout_plan().get("plan", [])
+
+            plan = WeeklyPlan(
+                user_id=user_id,
+                week_start_date=monday,
+                generated_by="auto_fallback",
+            )
+            db.add(plan)
+            db.flush()
+
+            for day_data in fallback_data:
+                day_num = day_data.get("day", 1)
+                exercises = day_data.get("exercises", [])
+                session_date = monday + timedelta(days=day_num - 1)
+
+                ws = WorkoutSession(
+                    user_id=user_id,
+                    weekly_plan_id=plan.id,
+                    session_date=session_date,
+                    day_of_week=day_num,
+                    day_name=day_data.get("day_name", DAYS[day_num - 1] if 1 <= day_num <= 7 else "Monday"),
+                    focus_area=day_data.get("focus", ""),
+                    planned_duration_min=day_data.get("duration_minutes", 45),
+                    exercises_planned=exercises,
+                    warmup=day_data.get("warmup", ""),
+                    cooldown=day_data.get("cooldown", ""),
+                    tips=json.dumps(day_data.get("tips", "")),
+                    calories_burned_estimate=day_data.get("calories_estimate", 250),
+                    day=day_num,
+                    exercises=json.dumps(exercises),
+                    reasoning=day_data.get("session_reasoning") or "",
+                )
+                db.add(ws)
+
+            db.commit()
+
+            sessions = db.query(WorkoutSession).filter(
+                WorkoutSession.user_id == user_id,
+                WorkoutSession.weekly_plan_id == plan.id
+            ).all()
+        except Exception as e:
+            print(f"Error auto-generating fallback workout plan: {e}")
+            db.rollback()
 
     # Deduplicate sessions by day_of_week (take the latest id for each day)
     unique_sessions = {}

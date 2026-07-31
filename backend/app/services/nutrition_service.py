@@ -109,8 +109,17 @@ def get_all_nutrition(db: Session, user_id: int) -> list:
         except Exception as e:
             print(f"Auto-regeneration of 7-day plan notice: {e}")
     
-    result = []
+    # Deduplicate by day (keep the latest id for each day)
+    unique_plans = {}
     for n in plans:
+        d = n.day or 1
+        if d not in unique_plans or n.id > unique_plans[d].id:
+            unique_plans[d] = n
+
+    deduped_plans = [unique_plans[d] for d in sorted(unique_plans.keys())]
+
+    result = []
+    for n in deduped_plans:
         meals_dict = {}
         if n.plan_data:
             try:

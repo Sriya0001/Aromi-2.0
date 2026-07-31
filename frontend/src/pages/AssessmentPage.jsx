@@ -21,7 +21,6 @@ const steps = [
     { id: 'injuries', label: 'Any current injuries we should know about?', type: 'text', placeholder: 'e.g. knee pain, bad back, or none', key: 'injuries' },
     { id: 'diet_preference', label: "What's your diet preference?", type: 'select', options: ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Eggetarian'], key: 'diet_preference' },
     { id: 'allergies', label: 'Do you have any food allergies?', type: 'text', placeholder: 'e.g. nuts, dairy, or none', key: 'allergies' },
-    { id: 'calendar_sync', label: 'Sync workouts to Google Calendar?', type: 'select', options: ['Yes', 'No'], key: 'calendar_sync' },
 ]
 
 export default function AssessmentPage() {
@@ -61,7 +60,7 @@ export default function AssessmentPage() {
                     workout_preference: answers.workout_preference?.toLowerCase(),
                     workout_time: answers.workout_time?.toLowerCase(),
                     diet_preference: answers.diet_preference?.toLowerCase(),
-                    calendar_sync: answers.calendar_sync?.toLowerCase() || 'no',
+                    calendar_sync: 'no',
                     assessment_completed: 'yes',
                 }
 

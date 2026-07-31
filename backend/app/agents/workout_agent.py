@@ -184,19 +184,104 @@ Return ONLY this JSON structure:
   ]
 }}"""
 
+    def _medical_safety_check(self, context: AgentContext, ex_name: str) -> tuple[bool, str]:
+        hp = context.health_profile or {}
+        health_cond = str(hp.get("health_conditions") or "").lower()
+        medical_hist = str(hp.get("medical_history") or "").lower()
+        injuries = str(hp.get("injuries") or "").lower()
+
+        combined_text = f"{health_cond} {medical_hist} {injuries}"
+        ex_lower = ex_name.lower()
+
+        # 1. Pregnancy Safety Guardrails
+        if "pregnant" in combined_text or "pregnancy" in combined_text or hp.get("is_pregnant"):
+            forbidden = ["jump", "burpee", "crunch", "twist", "deadlift", "heavy", "sprint", "plank", "lunge"]
+            if any(f in ex_lower for f in forbidden):
+                return False, "High impact, abdominal strain, or prone position restricted during pregnancy"
+
+        # 2. Hypertension Safety Guardrails
+        if "hypertension" in combined_text or "high blood pressure" in combined_text:
+            if "headstand" in ex_lower or "inverted" in ex_lower:
+                return False, "Inverted positions restricted for hypertension"
+
+        # 3. Knee Pain / Injury Guardrails
+        if "knee" in combined_text:
+            if "deep squat" in ex_lower or "walking lunge" in ex_lower:
+                return False, "High knee-flexion exercise restricted due to knee condition"
+
+        # 4. Back Injury Guardrails
+        if "back" in combined_text or "spine" in combined_text or "hernia" in combined_text:
+            if "barbell deadlift" in ex_lower or "heavy squat" in ex_lower:
+                return False, "Heavy spinal loading exercise restricted due to back condition"
+
+        return True, ""
+
     def _apply_safety_filter(self, sessions: list, context: AgentContext) -> tuple[list, list]:
-        """Post-generation safety pass. Removes unsafe exercises, logs warnings."""
+        """Post-generation safety pass. Removes unsafe exercises, logs warnings, and enforces age/joint safety guardrails."""
         warnings = []
         cleaned_sessions = []
+        
+        hp = context.health_profile or {}
+        try:
+            age = int(hp.get("age") or 25)
+        except (ValueError, TypeError):
+            age = 25
+            
+        injuries = str(hp.get("injuries") or "").lower()
+        health_cond = str(hp.get("health_conditions") or "").lower()
+        medical_hist = str(hp.get("medical_history") or "").lower()
+        fitness_lvl = str(hp.get("fitness_level") or "").lower()
+
+        combined_text = f"{health_cond} {medical_hist} {injuries}"
+        is_pregnant = "pregnant" in combined_text or "pregnancy" in combined_text or hp.get("is_pregnant")
+        is_senior = age >= 50 or "senior" in fitness_lvl or "beginner" in fitness_lvl
+        has_knee_issues = "knee" in combined_text or is_senior
+        has_back_issues = "back" in combined_text or "spine" in combined_text
 
         for session in sessions:
             cleaned_exercises = []
             for exercise in session.get("exercises", []):
-                is_safe, reason = self._medical_safety_check(context, exercise.get("name", ""))
-                if is_safe:
-                    cleaned_exercises.append(exercise)
-                else:
-                    warnings.append(f"Removed '{exercise.get('name')}': {reason}")
+                ex_name = exercise.get("name", "")
+                ex_name_lower = ex_name.lower()
+                
+                is_safe, reason = self._medical_safety_check(context, ex_name)
+                if not is_safe:
+                    warnings.append(f"Removed '{ex_name}': {reason}")
+                    continue
+
+                # Pregnancy Replacements
+                if is_pregnant:
+                    if any(f in ex_name_lower for f in ["lunge", "squat", "push"]):
+                        exercise["name"] = "Chair Wall Push-ups / Pelvic Tilts"
+                        exercise["instructions"] = "Gentle prenatal movement. Keep breathing steady."
+                        exercise["reps"] = "8-10"
+                        exercise["sets"] = 2
+                        exercise["rest_seconds"] = 90
+
+                # Senior / Knee Safety Replacement Rules
+                elif has_knee_issues:
+                    if "walking lunge" in ex_name_lower or "lunge" in ex_name_lower:
+                        exercise["name"] = "Step-Ups"
+                        exercise["instructions"] = "Step onto a low, sturdy step using a wall for balance."
+                        exercise["youtube_query"] = "step ups tutorial"
+                        warnings.append(f"Replaced '{ex_name}' with 'Step-Ups' to protect knee joints.")
+                    elif "jump" in ex_name_lower or "burpee" in ex_name_lower:
+                        exercise["name"] = "Glute Bridges"
+                        exercise["instructions"] = "Lie on back and gently raise hips."
+                        exercise["youtube_query"] = "glute bridge tutorial"
+                        warnings.append(f"Replaced high-impact '{ex_name}' with 'Glute Bridges'.")
+
+                # Reps and Rest Adjustment for Senior / Beginner
+                if is_senior and not is_pregnant:
+                    if isinstance(exercise.get("sets"), int) and exercise["sets"] > 3:
+                        exercise["sets"] = 2
+                    reps_str = str(exercise.get("reps", ""))
+                    if "15" in reps_str or "20" in reps_str or "12" in reps_str:
+                        exercise["reps"] = "8-10"
+                    exercise["rest_seconds"] = max(60, int(exercise.get("rest_seconds") or 60))
+
+                cleaned_exercises.append(exercise)
+                
             session["exercises"] = cleaned_exercises
             cleaned_sessions.append(session)
 

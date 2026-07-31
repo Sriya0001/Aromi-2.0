@@ -58,44 +58,44 @@ FALLBACK_WORKOUT_PLAN = [
         "day": 2,
         "day_name": "Tuesday",
         "focus": "Lower Body & Glutes",
-        "duration_minutes": 45,
-        "warmup": "5 min leg swings, high knees, and ankle mobility exercises",
+        "duration_minutes": 40,
+        "warmup": "5 min gentle leg swings, ankle mobility, and hip circles",
         "exercises": [
             {
-                "name": "Bodyweight Squats",
-                "sets": 4,
-                "reps": "15",
+                "name": "Chair / Bodyweight Squats",
+                "sets": 3,
+                "reps": "10",
                 "rest_seconds": 60,
                 "muscle_group": "Quadriceps & Glutes",
-                "instructions": "Sit back into hips, knees tracking over toes.",
-                "youtube_query": "bodyweight squat form tutorial",
-                "reasoning": "Fundamental lower body movement pattern."
+                "instructions": "Sit back into hips with control. Use a chair for support if needed.",
+                "youtube_query": "chair squats form tutorial",
+                "reasoning": "Fundamental lower body movement pattern with joint support."
             },
             {
-                "name": "Walking Lunges",
+                "name": "Step-Ups",
                 "sets": 3,
-                "reps": "12 per leg",
+                "reps": "8 per leg",
                 "rest_seconds": 60,
                 "muscle_group": "Quadriceps & Hamstrings",
-                "instructions": "Step forward, lower rear knee toward floor, push up.",
-                "youtube_query": "walking lunges tutorial",
-                "reasoning": "Unilateral leg strength and balance."
+                "instructions": "Step onto a low platform or sturdy step, drive through heel.",
+                "youtube_query": "step ups tutorial",
+                "reasoning": "Low-impact unilateral leg strength and balance."
             },
             {
                 "name": "Glute Bridges",
                 "sets": 3,
-                "reps": "15",
-                "rest_seconds": 45,
+                "reps": "10",
+                "rest_seconds": 60,
                 "muscle_group": "Glutes & Lower Back",
-                "instructions": "Drive through heels, squeeze glutes at the top.",
+                "instructions": "Drive through heels, squeeze glutes gently at the top.",
                 "youtube_query": "glute bridge form tutorial",
                 "reasoning": "Glute activation and posterior chain strength."
             }
         ],
         "cooldown": "5 min hamstring stretch, quad stretch, and hip opener",
         "tips": "Keep weight balanced across mid-foot and heel.",
-        "calories_estimate": 280,
-        "session_reasoning": "Fallback rule-based plan: Fundamental lower body resistance."
+        "calories_estimate": 220,
+        "session_reasoning": "Fallback rule-based plan: Low-impact lower body resistance."
     },
     {
         "day": 3,
@@ -610,7 +610,242 @@ FALLBACK_NUTRITION_PLAN = [
 ]
 
 
-def get_fallback_workout_plan() -> Dict[str, Any]:
+SENIOR_FALLBACK_WORKOUT_PLAN = [
+    {
+        "day": 1,
+        "day_name": "Monday",
+        "focus": "Upper Body & Core (Gentle)",
+        "duration_minutes": 25,
+        "warmup": "5 min gentle shoulder rolls and arm swings",
+        "exercises": [
+            {
+                "name": "Wall Push-ups",
+                "sets": 2,
+                "reps": "8-10",
+                "rest_seconds": 90,
+                "muscle_group": "Chest & Arms",
+                "instructions": "Stand arm's length from wall, place hands flat, lower chest gently.",
+                "youtube_query": "wall push-ups senior tutorial",
+                "reasoning": "Joint-safe upper body pressing for functional shoulder strength."
+            },
+            {
+                "name": "Glute Bridges",
+                "sets": 2,
+                "reps": "10",
+                "rest_seconds": 90,
+                "muscle_group": "Glutes & Lower Back",
+                "instructions": "Lie on back, knees bent, gently lift hips off ground.",
+                "youtube_query": "glute bridge senior tutorial",
+                "reasoning": "Supports pelvic stability and protects lower back."
+            },
+            {
+                "name": "Seated Torso Twists",
+                "sets": 2,
+                "reps": "10 per side",
+                "rest_seconds": 60,
+                "muscle_group": "Core & Spinal Mobility",
+                "instructions": "Sit tall in chair, gently rotate upper body left and right.",
+                "youtube_query": "seated torso twists gentle",
+                "reasoning": "Safe spinal rotation without spinal compression."
+            }
+        ],
+        "cooldown": "5 min seated neck and shoulder stretches",
+        "tips": "Move smoothly without forcing any joint past comfortable range.",
+        "calories_estimate": 140,
+        "session_reasoning": "Senior low-impact plan: Focus on joint health, posture, and stability."
+    },
+    {
+        "day": 2,
+        "day_name": "Tuesday",
+        "focus": "Lower Body & Balance (Gentle)",
+        "duration_minutes": 25,
+        "warmup": "5 min ankle circles and gentle leg swings",
+        "exercises": [
+            {
+                "name": "Chair Squats",
+                "sets": 2,
+                "reps": "8-10",
+                "rest_seconds": 90,
+                "muscle_group": "Quadriceps & Glutes",
+                "instructions": "Sit back onto a sturdy chair with control and stand up gently.",
+                "youtube_query": "chair squats proper form tutorial",
+                "reasoning": "Functional leg strength with chair support to protect knees."
+            },
+            {
+                "name": "Step-Ups",
+                "sets": 2,
+                "reps": "8 per leg",
+                "rest_seconds": 90,
+                "muscle_group": "Legs & Balance",
+                "instructions": "Step onto a low, stable step holding wall/rail for support.",
+                "youtube_query": "step-ups senior exercise tutorial",
+                "reasoning": "Improves climbing ability and single-leg balance safely."
+            },
+            {
+                "name": "Seated Calf Raises",
+                "sets": 2,
+                "reps": "12",
+                "rest_seconds": 60,
+                "muscle_group": "Calves & Ankle Mobility",
+                "instructions": "Sit upright, press up onto toes, hold for 1 second.",
+                "youtube_query": "seated calf raises tutorial",
+                "reasoning": "Promotes lower leg circulation and ankle joint health."
+            }
+        ],
+        "cooldown": "5 min gentle hamstring and quad stretch",
+        "tips": "Always keep a chair or wall nearby for balance support.",
+        "calories_estimate": 130,
+        "session_reasoning": "Senior low-impact plan: Joint-friendly leg strength and fall prevention."
+    },
+    {
+        "day": 3,
+        "day_name": "Wednesday",
+        "focus": "Active Recovery & Flexibility",
+        "duration_minutes": 20,
+        "warmup": "3 min deep abdominal breathing",
+        "exercises": [
+            {
+                "name": "Light Yoga Flow",
+                "sets": 1,
+                "reps": "15 min",
+                "rest_seconds": 0,
+                "muscle_group": "Full Body",
+                "instructions": "Perform gentle seated stretches and Cat-Cow pose.",
+                "youtube_query": "light yoga flow senior",
+                "reasoning": "Restores mobility and relieves joint stiffness."
+            }
+        ],
+        "cooldown": "5 min relaxation breathing",
+        "tips": "Rest is crucial for muscle repair.",
+        "calories_estimate": 90,
+        "session_reasoning": "Active recovery day for longevity and stress relief."
+    },
+    {
+        "day": 4,
+        "day_name": "Thursday",
+        "focus": "Postural Alignment & Core",
+        "duration_minutes": 25,
+        "warmup": "5 min gentle arm circles and thoracic twists",
+        "exercises": [
+            {
+                "name": "Bird-Dog",
+                "sets": 2,
+                "reps": "8 per side",
+                "rest_seconds": 90,
+                "muscle_group": "Core & Back Stability",
+                "instructions": "On hands and knees, extend opposite arm and leg straight out gently.",
+                "youtube_query": "bird-dog exercise senior tutorial",
+                "reasoning": "Protects lumbar spine while building core balance."
+            },
+            {
+                "name": "Standing Side Leg Raises",
+                "sets": 2,
+                "reps": "10 per leg",
+                "rest_seconds": 60,
+                "muscle_group": "Hips & Balance",
+                "instructions": "Hold onto a wall for balance, gently lift leg out to side.",
+                "youtube_query": "standing side leg raises senior",
+                "reasoning": "Strengthens hip abductors to improve walking stability."
+            }
+        ],
+        "cooldown": "5 min child's pose and chest opener",
+        "tips": "Focus on slow, controlled movements.",
+        "calories_estimate": 120,
+        "session_reasoning": "Core and postural alignment."
+    },
+    {
+        "day": 5,
+        "day_name": "Friday",
+        "focus": "Full Body Gentle Mobility",
+        "duration_minutes": 25,
+        "warmup": "5 min ankle rolls and gentle leg swings",
+        "exercises": [
+            {
+                "name": "Chair Squats",
+                "sets": 2,
+                "reps": "8-10",
+                "rest_seconds": 90,
+                "muscle_group": "Quadriceps & Glutes",
+                "instructions": "Perform controlled sit-to-stand repetitions.",
+                "youtube_query": "chair squats form tutorial",
+                "reasoning": "Reinforces leg power for daily tasks."
+            },
+            {
+                "name": "Wall Push-ups",
+                "sets": 2,
+                "reps": "8-10",
+                "rest_seconds": 90,
+                "muscle_group": "Chest & Arms",
+                "instructions": "Press away smoothly from wall.",
+                "youtube_query": "wall push-ups senior tutorial",
+                "reasoning": "Safe upper body endurance."
+            }
+        ],
+        "cooldown": "5 min full body stretch",
+        "tips": "Hydrate well before and after session.",
+        "calories_estimate": 140,
+        "session_reasoning": "Full body low-impact maintenance."
+    },
+    {
+        "day": 6,
+        "day_name": "Saturday",
+        "focus": "Core & Balance",
+        "duration_minutes": 20,
+        "warmup": "5 min light walking",
+        "exercises": [
+            {
+                "name": "Seated Calf Raises",
+                "sets": 2,
+                "reps": "12",
+                "rest_seconds": 60,
+                "muscle_group": "Calves",
+                "instructions": "Raise heels up smoothly while seated.",
+                "youtube_query": "seated calf raises tutorial",
+                "reasoning": "Ankle mobility and balance."
+            },
+            {
+                "name": "Glute Bridges",
+                "sets": 2,
+                "reps": "10",
+                "rest_seconds": 90,
+                "muscle_group": "Glutes",
+                "instructions": "Squeeze glutes at top.",
+                "youtube_query": "glute bridge senior tutorial",
+                "reasoning": "Posterior strength."
+            }
+        ],
+        "cooldown": "5 min stretch",
+        "tips": "Keep movements comfortable.",
+        "calories_estimate": 110,
+        "session_reasoning": "Saturday light movement."
+    },
+    {
+        "day": 7,
+        "day_name": "Sunday",
+        "focus": "Rest & Regeneration",
+        "duration_minutes": 0,
+        "warmup": "",
+        "exercises": [],
+        "cooldown": "",
+        "tips": "Take a relaxing walk or rest completely.",
+        "calories_estimate": 0,
+        "session_reasoning": "Full rest day."
+    }
+]
+
+
+def get_fallback_workout_plan(user_profile: dict = None) -> Dict[str, Any]:
+    if user_profile:
+        try:
+            age = int(user_profile.get("age") or 25)
+        except (ValueError, TypeError):
+            age = 25
+
+        fitness_lvl = str(user_profile.get("fitness_level") or "").lower()
+
+        if age >= 50 or "senior" in fitness_lvl:
+            return {"plan": SENIOR_FALLBACK_WORKOUT_PLAN}
+
     return {"plan": FALLBACK_WORKOUT_PLAN}
 
 

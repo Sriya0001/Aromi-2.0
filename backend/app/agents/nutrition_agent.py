@@ -69,19 +69,22 @@ Return ONLY valid JSON. No markdown, no extra text."""
             from app.services.fallback_service import get_fallback_nutrition_plan
             plan_data = get_fallback_nutrition_plan()
 
+        # Sanitize meal plan for allergens and medical conditions
+        clean_plan = self._apply_nutrition_safety_filter(plan_data.get("plan", []), hp, context)
+
         reasoning = (
             f"TDEE: {caloric_target + self._goal_delta(hp)} kcal | "
             f"Target: {caloric_target} kcal | "
             f"Protein: {macro_split['protein_g']}g ({macro_split['protein_g_per_kg']}g/kg) | "
             f"Medical adjustments: {', '.join(medical_adjustments) or 'none'} | "
-            f"Allergens avoided: {context.health_profile.get('food_allergies', [])}"
+            f"Allergens avoided: {context.health_profile.get('food_allergies') or context.health_profile.get('allergies', 'none')}"
         )
 
         return AgentOutput(
             agent_name=self.name,
             success=True,
             data={
-                "plan": plan_data.get("plan", []),
+                "plan": clean_plan,
                 "caloric_target": caloric_target,
                 "macro_split": macro_split,
                 "medical_adjustments": medical_adjustments,
@@ -91,6 +94,45 @@ Return ONLY valid JSON. No markdown, no extra text."""
             latency_ms=int((time.time() - start) * 1000),
             token_count=token_count
         )
+
+    def _apply_nutrition_safety_filter(self, plan: list, hp: dict, context: AgentContext) -> list:
+        allergies = str(hp.get("food_allergies") or hp.get("allergies") or "").lower()
+        health_cond = str(hp.get("health_conditions") or "").lower()
+        medical_hist = str(hp.get("medical_history") or "").lower()
+
+        # Allergen flags
+        has_soy = "soy" in allergies or "soybean" in allergies or "tofu" in allergies
+        has_nut = "nut" in allergies or "peanut" in allergies or "cashew" in allergies or "almond" in allergies
+        has_dairy = "dairy" in allergies or "lactose" in allergies or "milk" in allergies
+        has_gluten = "gluten" in allergies or "wheat" in allergies
+
+        replacements = []
+        if has_soy:
+            replacements.extend([("Soya Chunks", "Paneer / Dal"), ("Tofu", "Cottage Cheese (Paneer)"), ("Soy Milk", "Almond Milk"), ("Soy Sauce", "Coconut Aminos")])
+        if has_nut:
+            replacements.extend([("Peanut Butter", "Sunflower Seed Butter"), ("Almonds", "Pumpkin Seeds"), ("Cashews", "Roasted Chana"), ("Walnuts", "Flaxseeds")])
+        if has_dairy:
+            replacements.extend([("Paneer", "Tofu"), ("Curd", "Coconut Yoghurt"), ("Milk", "Almond Milk"), ("Ghee", "Olive Oil")])
+        if has_gluten:
+            replacements.extend([("Whole Wheat Roti", "Millets Roti (Ragi/Jowar)"), ("Rava", "Poha / Oats"), ("Bread", "Gluten-Free Bread")])
+
+        for day_plan in plan:
+            meals = day_plan.get("meals", {})
+            for m_key, m_val in meals.items():
+                if isinstance(m_val, dict):
+                    m_name = m_val.get("name", "")
+                    m_ing = m_val.get("ingredients", [])
+
+                    for old_item, new_item in replacements:
+                        if old_item.lower() in m_name.lower():
+                            m_val["name"] = m_name.replace(old_item, new_item)
+                        if isinstance(m_ing, list):
+                            m_val["ingredients"] = [
+                                ing.replace(old_item, new_item) if old_item.lower() in ing.lower() else ing
+                                for ing in m_ing
+                            ]
+
+        return plan
 
     def _compute_caloric_target(self, hp: dict, medical_conditions: list) -> int:
         """
