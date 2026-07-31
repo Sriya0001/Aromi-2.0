@@ -238,12 +238,37 @@ Return ONLY this JSON structure:
         has_knee_issues = "knee" in combined_text or is_senior
         has_back_issues = "back" in combined_text or "spine" in combined_text
 
+        # Long-Term Memory Dislikes Inspection
+        disliked_memories = []
+        if context.long_term_memory and isinstance(context.long_term_memory, dict):
+            disliked_memories = [d.lower() for d in context.long_term_memory.get("disliked_exercises", [])]
+        elif context.db and context.user_id:
+            try:
+                from app.services.memory_service import MemoryService
+                mem_ctx = MemoryService.get_user_memory_context(context.db, context.user_id)
+                disliked_memories = [d.lower() for d in mem_ctx.get("disliked_exercises", [])]
+            except Exception:
+                pass
+
         for session in sessions:
             cleaned_exercises = []
             for exercise in session.get("exercises", []):
                 ex_name = exercise.get("name", "")
                 ex_name_lower = ex_name.lower()
                 
+                # Check Long-Term Memory Dislike Enforcement
+                if any(dis in ex_name_lower or ex_name_lower in dis for dis in disliked_memories if len(dis) > 2):
+                    alt_candidates = ["Wall Push-ups", "Bird-Dog", "Seated Calf Raises", "Chair Squats", "Dead Bug", "Standing Side Leg Raises"]
+                    for alt in alt_candidates:
+                        if alt.lower() not in disliked_memories:
+                            exercise["name"] = alt
+                            exercise["instructions"] = f"Replaced '{ex_name}' based on your stored memory preference."
+                            exercise["youtube_query"] = f"{alt.lower()} tutorial"
+                            warnings.append(f"Replaced disliked '{ex_name}' with '{alt}' from long-term memory.")
+                            ex_name = alt
+                            ex_name_lower = alt.lower()
+                            break
+
                 is_safe, reason = self._medical_safety_check(context, ex_name)
                 if not is_safe:
                     warnings.append(f"Removed '{ex_name}': {reason}")

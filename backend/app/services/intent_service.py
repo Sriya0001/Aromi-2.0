@@ -536,11 +536,28 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
         target_ex = dislike_match.group(1).strip()
         target_ex = re.sub(r'^(the|a|an)\s+', '', target_ex)
 
+        # 1. Persist dislike to UserMemory table for long-term intelligence
+        from app.services.memory_service import MemoryService
+        MemoryService.upsert_memory(
+            db, user_id,
+            memory_type="preference",
+            key=f"dislike_{target_ex.lower()}",
+            value=target_ex.lower(),
+            source="explicit_user_chat",
+            confidence=1.0
+        )
+
+        # 2. Get all remembered dislikes for this user
+        mem_context = MemoryService.get_user_memory_context(db, user_id)
+        disliked_all = [d.lower() for d in mem_context.get("disliked_exercises", [])]
+        if target_ex.lower() not in disliked_all:
+            disliked_all.append(target_ex.lower())
+
         alt_map = {
             "glute bridge": "Bird-Dog",
             "glute bridges": "Bird-Dog",
             "bridge": "Bird-Dog",
-            "russian twist": "Glute Bridges",
+            "russian twist": "Seated Torso Twists",
             "twist": "Seated Torso Twists",
             "plank": "Bird-Dog",
             "push-up": "Wall Push-ups",
@@ -550,7 +567,7 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
             "chest press": "Dumbbell Chest Flyes",
             "squat": "Chair Squats",
             "lunge": "Step-Ups",
-            "deadlift": "Glute Bridges",
+            "deadlift": "Standing Side Leg Raises",
             "crunch": "Dead Bug",
             "sit-up": "Dead Bug",
             "situp": "Dead Bug",
@@ -571,21 +588,30 @@ async def detect_intent(message: str, db: Session, user_id: int, chat_history: l
         new_ex = None
         for k, v in alt_map.items():
             if k in target_ex.lower():
-                new_ex = v
-                break
+                if v.lower() not in disliked_all:
+                    new_ex = v
+                    break
 
-        fallback_candidates = ["Bird-Dog", "Chair Squats", "Wall Push-ups", "Seated Calf Raises", "Dead Bug"]
-        if not new_ex or new_ex.lower() == target_ex.lower() or target_ex.lower() in new_ex.lower():
-            for cand in fallback_candidates:
-                if cand.lower() != target_ex.lower() and target_ex.lower() not in cand.lower():
+        candidate_pool = [
+            "Bird-Dog", "Seated Torso Twists", "Chair Squats", "Wall Push-ups",
+            "Seated Calf Raises", "Dead Bug", "Standing Side Leg Raises", "Step-Ups",
+            "Dumbbell Chest Flyes", "Band Pull-Aparts", "Standing Bicep Curls"
+        ]
+
+        if not new_ex:
+            for cand in candidate_pool:
+                if cand.lower() not in disliked_all and target_ex.lower() not in cand.lower():
                     new_ex = cand
                     break
 
+        if not new_ex:
+            new_ex = "Bird-Dog"
+
         result = await replace_exercise_action(db, user_id, target_ex, new_ex, target_day)
         if result:
-            return result + f" Suggested alternative **{new_ex}** is great for your progression! 🎯", True
+            return result + f" I have stored your preference to avoid **{target_ex}** in memory. Suggested alternative **{new_ex}** fits your profile! 🧠🎯", True
         else:
-            return f"I've noted that you don't like **{target_ex}**! I recommend **{new_ex}** as a great alternative. Tell me if you'd like to replace any specific exercise in your plan with **{new_ex}**! 💪", True
+            return f"I've saved in memory that you dislike **{target_ex}**! Recommended alternative **{new_ex}** will be used in future plans. 💪", True
 
     # 6b. Remove + replace
     remove_and_replace = re.search(
